@@ -18,16 +18,21 @@
     "lint": "eslint .",
     "lint:fix": "pnpm lint --fix",
     "format": "prettier . --write --ignore-path ../../.prettierignore",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
+    "@extension/env": "workspace:*",
     "@extension/shared": "workspace:*",
-    "@extension/storage": "workspace:*",
-    "@extension/env": "workspace:*"
+    "@extension/storage": "workspace:*"
   },
   "devDependencies": {
     "@extension/hmr": "workspace:*",
     "@extension/tsconfig": "workspace:*",
-    "@extension/vite-config": "workspace:*"
+    "@extension/vite-config": "workspace:*",
+    "@types/jest": "^29.5.12",
+    "jsdom": "^26.1.0",
+    "vitest": "^2.1.8"
   }
 }
