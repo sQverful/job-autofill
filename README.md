@@ -72,6 +72,7 @@ the build speed and development experience by using Vite and Turborepo.
 - [Custom i18n package](/packages/i18n/)
 - [Custom HMR (Hot Module Rebuild) plugin](/packages/hmr)
 - [End-to-end testing with WebdriverIO](https://webdriver.io/)
+- Streamlined ESLint rules for easier contributions
 
 ## Installation
 
