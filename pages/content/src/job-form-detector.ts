@@ -6,6 +6,7 @@ export class JobFormDetector {
   private observer: MutationObserver | null = null;
   private detectedForms: Set<HTMLFormElement> = new Set();
   private injectedElements: Set<HTMLElement> = new Set();
+  private scanTimeoutId: number | null = null;
 
   constructor() {
     this.observer = new MutationObserver(this.handleMutations.bind(this));
@@ -58,8 +59,14 @@ export class JobFormDetector {
     }
 
     if (shouldScan) {
-      // Debounce scanning
-      setTimeout(() => this.scanForForms(), 500);
+      // Debounce scanning to avoid repeated heavy scans on rapid DOM changes
+      if (this.scanTimeoutId !== null) {
+        clearTimeout(this.scanTimeoutId);
+      }
+      this.scanTimeoutId = window.setTimeout(() => {
+        this.scanForForms();
+        this.scanTimeoutId = null;
+      }, 500);
     }
   }
 
@@ -85,7 +92,7 @@ export class JobFormDetector {
    * Check if a form is likely a job application form
    */
   private isJobApplicationForm(form: HTMLFormElement): boolean {
-    const formHTML = form.innerHTML.toLowerCase();
+    const formText = (form.textContent || '').toLowerCase().slice(0, 2000);
     const formAction = form.action.toLowerCase();
     const formClasses = form.className.toLowerCase();
 
@@ -121,13 +128,13 @@ export class JobFormDetector {
       return true;
     }
 
-    // Check form content
-    if (jobKeywords.some(keyword => formHTML.includes(keyword))) {
+    // Check textual content of the form for job-related keywords
+    if (jobKeywords.some(keyword => formText.includes(keyword))) {
       return true;
     }
 
     // Check for common job application question patterns
-    if (questionKeywords.some(keyword => formHTML.includes(keyword))) {
+    if (questionKeywords.some(keyword => formText.includes(keyword))) {
       return true;
     }
 
@@ -440,6 +447,11 @@ export class JobFormDetector {
    */
   stopMonitoring(): void {
     this.observer?.disconnect();
+
+    if (this.scanTimeoutId !== null) {
+      clearTimeout(this.scanTimeoutId);
+      this.scanTimeoutId = null;
+    }
 
     // Remove injected elements
     this.injectedElements.forEach(element => {
