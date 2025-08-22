@@ -69,7 +69,10 @@ export class FormMonitor {
           childList: true,
           subtree: true,
           attributes: true,
-          attributeFilter: ['class', 'style', 'disabled', 'required', 'aria-invalid'],
+          // Watching frequently changing attributes like "class" or "style" across the
+          // whole document can generate a huge number of mutation events and freeze the
+          // browser. Limit observation to only the attributes required for form logic.
+          attributeFilter: ['disabled', 'required', 'aria-invalid'],
         });
       }
 
@@ -78,7 +81,8 @@ export class FormMonitor {
           childList: true,
           subtree: true,
           attributes: true,
-          attributeFilter: ['aria-invalid', 'aria-describedby', 'class'],
+          // Avoid tracking class changes globally to reduce unnecessary processing.
+          attributeFilter: ['aria-invalid', 'aria-describedby'],
         });
       }
 
@@ -90,7 +94,6 @@ export class FormMonitor {
 
       this.isMonitoring = true;
       console.log('Form monitoring started');
-
     } catch (error: any) {
       console.error('Failed to start form monitoring:', error);
     }
@@ -131,7 +134,7 @@ export class FormMonitor {
    */
   addForm(formElement: HTMLFormElement, formId?: string): string {
     const id = formId || this.generateFormId(formElement);
-    
+
     if (this.monitoredForms.has(id)) {
       console.log(`Form ${id} is already being monitored`);
       return id;
@@ -289,7 +292,7 @@ export class FormMonitor {
    * Setup mutation observer for DOM changes
    */
   private setupMutationObserver(): void {
-    this.mutationObserver = new MutationObserver((mutations) => {
+    this.mutationObserver = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         this.handleMutation(mutation);
       }
@@ -300,7 +303,7 @@ export class FormMonitor {
    * Setup validation observer for validation state changes
    */
   private setupValidationObserver(): void {
-    this.validationObserver = new MutationObserver((mutations) => {
+    this.validationObserver = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         this.handleValidationMutation(mutation);
       }
@@ -328,24 +331,23 @@ export class FormMonitor {
   /**
    * Handle child list mutation
    */
-  private handleChildListMutation
-(mutation: MutationRecord): void {
+  private handleChildListMutation(mutation: MutationRecord): void {
     // Check for added forms
     for (const node of mutation.addedNodes) {
       if (node.nodeType === Node.ELEMENT_NODE) {
         const element = node as Element;
-        
+
         // Check if it's a form
         if (element.tagName === 'FORM') {
           this.addForm(element as HTMLFormElement);
         }
-        
+
         // Check for forms within added element
         const forms = element.querySelectorAll('form');
         for (const form of forms) {
           this.addForm(form as HTMLFormElement);
         }
-        
+
         // Check for form fields added to existing forms
         this.checkForNewFields(element);
       }
@@ -355,7 +357,7 @@ export class FormMonitor {
     for (const node of mutation.removedNodes) {
       if (node.nodeType === Node.ELEMENT_NODE) {
         const element = node as Element;
-        
+
         // Check if it's a monitored form
         for (const [formId, monitoredForm] of this.monitoredForms.entries()) {
           if (monitoredForm.element === element || !document.contains(monitoredForm.element)) {
@@ -371,7 +373,7 @@ export class FormMonitor {
    */
   private handleAttributeMutation(mutation: MutationRecord): void {
     const element = mutation.target as Element;
-    
+
     // Check if it's a form field in a monitored form
     const formId = this.findFormIdForElement(element);
     if (!formId) return;
@@ -401,7 +403,7 @@ export class FormMonitor {
    */
   private handleValidationMutation(mutation: MutationRecord): void {
     const element = mutation.target as Element;
-    
+
     // Check if it's a form field in a monitored form
     const formId = this.findFormIdForElement(element);
     if (!formId) return;
@@ -476,7 +478,7 @@ export class FormMonitor {
   private handleFormInput(event: Event): void {
     const element = event.target as HTMLElement;
     const formId = this.findFormIdForElement(element);
-    
+
     if (!formId) return;
 
     this.debounceFieldChange(formId, element, 'input');
@@ -488,7 +490,7 @@ export class FormMonitor {
   private handleFormChange(event: Event): void {
     const element = event.target as HTMLElement;
     const formId = this.findFormIdForElement(element);
-    
+
     if (!formId) return;
 
     this.debounceFieldChange(formId, element, 'change');
@@ -500,7 +502,7 @@ export class FormMonitor {
   private handleFormFocus(event: Event): void {
     const element = event.target as HTMLElement;
     const formId = this.findFormIdForElement(element);
-    
+
     if (!formId) return;
 
     // Update field focus state immediately
@@ -513,7 +515,7 @@ export class FormMonitor {
   private handleFormBlur(event: Event): void {
     const element = event.target as HTMLElement;
     const formId = this.findFormIdForElement(element);
-    
+
     if (!formId) return;
 
     // Update field focus state and trigger validation
@@ -527,7 +529,7 @@ export class FormMonitor {
   private handleFormSubmit(event: Event): void {
     const formElement = event.target as HTMLFormElement;
     const formId = this.findFormIdForElement(formElement);
-    
+
     if (!formId) return;
 
     console.log(`Form ${formId} submitted`);
@@ -546,7 +548,7 @@ export class FormMonitor {
    */
   private debounceFieldChange(formId: string, element: HTMLElement, eventType: string): void {
     const debounceKey = `${formId}-${this.getElementId(element)}-${eventType}`;
-    
+
     // Clear existing timer
     const existingTimer = this.debounceTimers.get(debounceKey);
     if (existingTimer) {
@@ -598,7 +600,7 @@ export class FormMonitor {
    */
   private scanFormFields(formElement: HTMLFormElement): Map<string, HTMLElement> {
     const fields = new Map<string, HTMLElement>();
-    
+
     const fieldSelectors = [
       'input:not([type="hidden"])',
       'textarea',
@@ -632,7 +634,7 @@ export class FormMonitor {
       if (this.isFieldRequired(element)) {
         requiredFields.push(fieldId);
       }
-      
+
       if (this.isFieldCompleted(element)) {
         completedFields.push(fieldId);
       }
@@ -680,11 +682,14 @@ export class FormMonitor {
    */
   private detectCurrentStep(formElement: HTMLFormElement): number {
     // Look for active step indicators
-    const activeStep = formElement.querySelector('.step.active, .wizard-step.active, .form-step.active, [data-step].active');
+    const activeStep = formElement.querySelector(
+      '.step.active, .wizard-step.active, .form-step.active, [data-step].active',
+    );
     if (activeStep) {
-      const stepNumber = activeStep.getAttribute('data-step') || 
-                        activeStep.getAttribute('data-step-number') ||
-                        activeStep.textContent?.match(/\d+/)?.[0];
+      const stepNumber =
+        activeStep.getAttribute('data-step') ||
+        activeStep.getAttribute('data-step-number') ||
+        activeStep.textContent?.match(/\d+/)?.[0];
       if (stepNumber) {
         return parseInt(stepNumber, 10);
       }
@@ -719,12 +724,12 @@ export class FormMonitor {
     for (const [formId, monitoredForm] of this.monitoredForms.entries()) {
       if (monitoredForm.element.contains(element)) {
         const newFields = this.scanFormFields(monitoredForm.element);
-        
+
         // Check for newly added fields
         for (const [fieldId, fieldElement] of newFields.entries()) {
           if (!monitoredForm.fields.has(fieldId)) {
             monitoredForm.fields.set(fieldId, fieldElement);
-            
+
             this.emitChangeEvent({
               type: 'field_added',
               formId,
@@ -764,7 +769,7 @@ export class FormMonitor {
     if (formElement.id) {
       return `form-${formElement.id}`;
     }
-    
+
     if (formElement.name) {
       return `form-${formElement.name}`;
     }
@@ -781,13 +786,13 @@ export class FormMonitor {
   private getElementId(element: HTMLElement): string {
     if (element.id) return element.id;
     if (element.name) return element.name;
-    
+
     // Generate ID based on element properties
     const tag = element.tagName.toLowerCase();
     const type = element.getAttribute('type') || '';
     const placeholder = element.getAttribute('placeholder') || '';
     const label = this.findFieldLabel(element);
-    
+
     return `${tag}-${type}-${placeholder}-${label}`.replace(/[^a-zA-Z0-9-]/g, '-').replace(/-+/g, '-');
   }
 
@@ -826,15 +831,15 @@ export class FormMonitor {
       }
       return element.value;
     }
-    
+
     if (element instanceof HTMLTextAreaElement) {
       return element.value;
     }
-    
+
     if (element instanceof HTMLSelectElement) {
       return element.value;
     }
-    
+
     if (element.contentEditable === 'true') {
       return element.textContent || element.innerText;
     }
@@ -846,9 +851,11 @@ export class FormMonitor {
    * Check if field is required
    */
   private isFieldRequired(element: HTMLElement): boolean {
-    return element.hasAttribute('required') || 
-           element.getAttribute('aria-required') === 'true' ||
-           element.classList.contains('required');
+    return (
+      element.hasAttribute('required') ||
+      element.getAttribute('aria-required') === 'true' ||
+      element.classList.contains('required')
+    );
   }
 
   /**
@@ -856,11 +863,11 @@ export class FormMonitor {
    */
   private isFieldCompleted(element: HTMLElement): boolean {
     const value = this.getFieldValue(element);
-    
+
     if (typeof value === 'boolean') {
       return true; // Checkboxes/radios are always "completed"
     }
-    
+
     return value && value.toString().trim().length > 0;
   }
 
@@ -898,7 +905,7 @@ export class FormMonitor {
 
     // Update validation state
     const validationState = monitoredForm.validationState;
-    
+
     if (errors.length > 0) {
       validationState.errors[fieldId] = errors;
     } else {
@@ -924,8 +931,9 @@ export class FormMonitor {
     }
 
     // Update overall form validity
-    validationState.isValid = Object.keys(validationState.errors).length === 0 &&
-                             validationState.requiredFields.every(id => validationState.completedFields.includes(id));
+    validationState.isValid =
+      Object.keys(validationState.errors).length === 0 &&
+      validationState.requiredFields.every(id => validationState.completedFields.includes(id));
 
     this.updateValidationState(formId, validationState);
   }
@@ -949,7 +957,7 @@ export class FormMonitor {
     // Debounce validation to avoid excessive updates
     const validationKey = `${formId}-validation`;
     const existingTimer = this.debounceTimers.get(validationKey);
-    
+
     if (existingTimer) {
       clearTimeout(existingTimer);
     }
@@ -980,7 +988,7 @@ export class FormMonitor {
   private handleFieldDisabledChange(formId: string, element: Element, mutation: MutationRecord): void {
     const fieldId = this.getElementId(element as HTMLElement);
     const isDisabled = element.hasAttribute('disabled');
-    
+
     console.log(`Field ${fieldId} disabled state changed: ${isDisabled}`);
   }
 
@@ -990,7 +998,7 @@ export class FormMonitor {
   private handleFieldRequiredChange(formId: string, element: Element, mutation: MutationRecord): void {
     const fieldId = this.getElementId(element as HTMLElement);
     const isRequired = element.hasAttribute('required');
-    
+
     const monitoredForm = this.monitoredForms.get(formId);
     if (!monitoredForm) return;
 
@@ -1015,7 +1023,7 @@ export class FormMonitor {
     const classList = element.classList;
     const hasError = classList.contains('error') || classList.contains('invalid') || classList.contains('is-invalid');
     const hasWarning = classList.contains('warning') || classList.contains('warn');
-    
+
     if (hasError || hasWarning) {
       this.validateField(formId, element as HTMLElement);
     }
@@ -1028,7 +1036,7 @@ export class FormMonitor {
     // Check for visibility changes that might indicate step changes
     const style = (element as HTMLElement).style;
     const isVisible = style.display !== 'none' && style.visibility !== 'hidden';
-    
+
     if (!isVisible) {
       // Field became hidden, might be step change
       this.checkForStepChange(formId);
@@ -1040,7 +1048,7 @@ export class FormMonitor {
    */
   private handleAriaInvalidChange(formId: string, element: Element, mutation: MutationRecord): void {
     const isInvalid = element.getAttribute('aria-invalid') === 'true';
-    
+
     if (isInvalid) {
       this.validateField(formId, element as HTMLElement);
     }
@@ -1051,7 +1059,7 @@ export class FormMonitor {
    */
   private handleAriaDescribedByChange(formId: string, element: Element, mutation: MutationRecord): void {
     const describedBy = element.getAttribute('aria-describedby');
-    
+
     if (describedBy) {
       // Check if the described element contains error messages
       const descriptionElement = document.getElementById(describedBy);
@@ -1085,17 +1093,19 @@ export class FormMonitor {
    */
   private isMultiStepNavigation(formElement: HTMLFormElement, event: Event): boolean {
     const submitter = (event as SubmitEvent).submitter;
-    
+
     if (submitter) {
       const buttonText = submitter.textContent?.toLowerCase() || '';
       const buttonValue = submitter.getAttribute('value')?.toLowerCase() || '';
-      
-      return buttonText.includes('next') || 
-             buttonText.includes('continue') || 
-             buttonText.includes('previous') ||
-             buttonValue.includes('next') ||
-             buttonValue.includes('continue') ||
-             buttonValue.includes('previous');
+
+      return (
+        buttonText.includes('next') ||
+        buttonText.includes('continue') ||
+        buttonText.includes('previous') ||
+        buttonValue.includes('next') ||
+        buttonValue.includes('continue') ||
+        buttonValue.includes('previous')
+      );
     }
 
     return false;
@@ -1113,13 +1123,13 @@ export class FormMonitor {
 
     if (newStep !== oldStep) {
       monitoredForm.currentStep = newStep;
-      
+
       console.log(`Multi-step form ${formId} navigated from step ${oldStep} to step ${newStep}`);
-      
+
       // Re-scan fields for the new step
       const newFields = this.scanFormFields(formElement);
       monitoredForm.fields = newFields;
-      
+
       // Update validation state for new step
       monitoredForm.validationState = this.createInitialValidationState(formId, newFields);
     }
