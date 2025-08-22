@@ -4,7 +4,7 @@
  * Main component that manages AI content generation for form fields
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AIContentModal } from './AIContentModal';
 import { AIContentButton } from './AIContentButton';
 import { AIContentIndicator } from './AIContentIndicator';
@@ -55,7 +55,7 @@ export const AIContentManager: React.FC<AIContentManagerProps> = ({
   });
 
   const [fieldStates, setFieldStates] = useState<Record<string, FieldState>>({});
-  const [buttonsRendered, setButtonsRendered] = useState<Set<string>>(new Set());
+  const renderedButtons = useRef<Map<string, HTMLElement>>(new Map());
 
   // Initialize field states
   useEffect(() => {
@@ -66,57 +66,13 @@ export const AIContentManager: React.FC<AIContentManagerProps> = ({
     setFieldStates(initialStates);
   }, [detectedFields]);
 
-  // Render AI buttons next to detected fields
-  useEffect(() => {
-    detectedFields.forEach(field => {
-      if (!buttonsRendered.has(field.id)) {
-        renderAIButton(field);
-        setButtonsRendered(prev => new Set(prev).add(field.id));
-      }
-    });
-  }, [detectedFields, buttonsRendered]);
-
-  const renderAIButton = (field: DetectedField) => {
-    // Check if button already exists
-    const existingButton = document.querySelector(`[data-ai-button-for="${field.id}"]`);
-    if (existingButton) return;
-
-    // Create button container
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'ai-content-button-wrapper';
-    buttonContainer.setAttribute('data-ai-button-for', field.id);
-    
-    // Position the button relative to the field
-    const fieldRect = field.element.getBoundingClientRect();
-    buttonContainer.style.position = 'absolute';
-    buttonContainer.style.top = `${fieldRect.top + window.scrollY}px`;
-    buttonContainer.style.left = `${fieldRect.right + window.scrollX + 10}px`;
-    buttonContainer.style.zIndex = '10000';
-
-    // Add to DOM
-    document.body.appendChild(buttonContainer);
-
-    // Render React component
-    import('react-dom/client').then(({ createRoot }) => {
-      const root = createRoot(buttonContainer);
-      root.render(
-        <AIContentButton
-          fieldElement={field.element}
-          contentType={field.type}
-          fieldLabel={field.label}
-          onGenerateClick={handleGenerateClick}
-        />
-      );
-    });
-  };
-
   const handleGenerateClick = useCallback((
-    contentType: AIContentRequestType, 
-    fieldLabel: string, 
+    contentType: AIContentRequestType,
+    fieldLabel: string,
     existingContent?: string
   ) => {
     const field = detectedFields.find(f => f.label === fieldLabel);
-    
+
     setModalState({
       isOpen: true,
       contentType,
@@ -125,6 +81,68 @@ export const AIContentManager: React.FC<AIContentManagerProps> = ({
       existingContent
     });
   }, [detectedFields]);
+
+  const renderAIButton = useCallback(
+    (field: DetectedField): HTMLElement => {
+      // Create button container
+      const buttonContainer = document.createElement('div');
+      buttonContainer.className = 'ai-content-button-wrapper';
+      buttonContainer.setAttribute('data-ai-button-for', field.id);
+
+      // Position the button relative to the field
+      const fieldRect = field.element.getBoundingClientRect();
+      buttonContainer.style.position = 'absolute';
+      buttonContainer.style.top = `${fieldRect.top + window.scrollY}px`;
+      buttonContainer.style.left = `${fieldRect.right + window.scrollX + 10}px`;
+      buttonContainer.style.zIndex = '10000';
+
+      // Add to DOM
+      document.body.appendChild(buttonContainer);
+
+      // Render React component
+      import('react-dom/client').then(({ createRoot }) => {
+        const root = createRoot(buttonContainer);
+        root.render(
+          <AIContentButton
+            fieldElement={field.element}
+            contentType={field.type}
+            fieldLabel={field.label}
+            onGenerateClick={handleGenerateClick}
+          />
+        );
+      });
+
+      return buttonContainer;
+    },
+    [handleGenerateClick]
+  );
+
+  // Render AI buttons next to detected fields and clean up removed ones
+  useEffect(() => {
+    // Add buttons for new fields
+    detectedFields.forEach(field => {
+      if (!renderedButtons.current.has(field.id)) {
+        const container = renderAIButton(field);
+        renderedButtons.current.set(field.id, container);
+      }
+    });
+
+    // Remove buttons for fields no longer present
+    renderedButtons.current.forEach((container, id) => {
+      if (!detectedFields.some(f => f.id === id)) {
+        container.remove();
+        renderedButtons.current.delete(id);
+      }
+    });
+  }, [detectedFields, renderAIButton]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      renderedButtons.current.forEach(container => container.remove());
+      renderedButtons.current.clear();
+    };
+  }, []);
 
   const handleModalClose = useCallback(() => {
     setModalState(prev => ({ ...prev, isOpen: false }));
