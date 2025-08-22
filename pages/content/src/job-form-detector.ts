@@ -6,6 +6,7 @@ export class JobFormDetector {
   private observer: MutationObserver | null = null;
   private detectedForms: Set<HTMLFormElement> = new Set();
   private injectedElements: Set<HTMLElement> = new Set();
+  private scanTimeoutId: number | null = null;
 
   constructor() {
     this.observer = new MutationObserver(this.handleMutations.bind(this));
@@ -16,16 +17,16 @@ export class JobFormDetector {
    */
   startMonitoring(): void {
     console.log('[Job Autofill] Starting form detection...');
-    
+
     // Initial scan
     this.scanForForms();
-    
+
     // Start observing DOM changes
     this.observer?.observe(document.body, {
       childList: true,
       subtree: true,
-      attributes: true,
-      attributeFilter: ['class', 'id']
+      // Watching attribute changes for every node is expensive and unnecessary here
+      // since the detector only reacts to added/removed elements.
     });
 
     // Also scan when page is fully loaded
@@ -41,7 +42,7 @@ export class JobFormDetector {
    */
   private handleMutations(mutations: MutationRecord[]): void {
     let shouldScan = false;
-    
+
     for (const mutation of mutations) {
       if (mutation.type === 'childList') {
         // Check if any added nodes contain forms
@@ -58,8 +59,14 @@ export class JobFormDetector {
     }
 
     if (shouldScan) {
-      // Debounce scanning
-      setTimeout(() => this.scanForForms(), 500);
+      // Debounce scanning to avoid repeated heavy scans on rapid DOM changes
+      if (this.scanTimeoutId !== null) {
+        clearTimeout(this.scanTimeoutId);
+      }
+      this.scanTimeoutId = window.setTimeout(() => {
+        this.scanForForms();
+        this.scanTimeoutId = null;
+      }, 500);
     }
   }
 
@@ -68,7 +75,7 @@ export class JobFormDetector {
    */
   private scanForForms(): void {
     const forms = document.querySelectorAll('form');
-    
+
     forms.forEach(form => {
       if (!this.detectedForms.has(form) && this.isJobApplicationForm(form)) {
         console.log('[Job Autofill] Job application form detected:', form);
@@ -85,19 +92,30 @@ export class JobFormDetector {
    * Check if a form is likely a job application form
    */
   private isJobApplicationForm(form: HTMLFormElement): boolean {
-    const formHTML = form.innerHTML.toLowerCase();
+    const formText = (form.textContent || '').toLowerCase().slice(0, 2000);
     const formAction = form.action.toLowerCase();
     const formClasses = form.className.toLowerCase();
-    
+
     // Check for job application indicators
     const jobKeywords = [
-      'job_application', 'application', 'apply', 'career', 'resume', 
-      'cover_letter', 'position', 'employment', 'candidate'
+      'job_application',
+      'application',
+      'apply',
+      'career',
+      'resume',
+      'cover_letter',
+      'position',
+      'employment',
+      'candidate',
     ];
-    
+
     const questionKeywords = [
-      'why are you interested', 'tell us about', 'describe your experience',
-      'what makes you', 'why do you want', 'interesting project'
+      'why are you interested',
+      'tell us about',
+      'describe your experience',
+      'what makes you',
+      'why do you want',
+      'interesting project',
     ];
 
     // Check form action URL
@@ -110,13 +128,13 @@ export class JobFormDetector {
       return true;
     }
 
-    // Check form content
-    if (jobKeywords.some(keyword => formHTML.includes(keyword))) {
+    // Check textual content of the form for job-related keywords
+    if (jobKeywords.some(keyword => formText.includes(keyword))) {
       return true;
     }
 
     // Check for common job application question patterns
-    if (questionKeywords.some(keyword => formHTML.includes(keyword))) {
+    if (questionKeywords.some(keyword => formText.includes(keyword))) {
       return true;
     }
 
@@ -143,7 +161,7 @@ export class JobFormDetector {
    */
   private scanForJobQuestionFields(): void {
     const textareas = document.querySelectorAll('textarea');
-    
+
     textareas.forEach(textarea => {
       if (this.isJobQuestionField(textarea)) {
         this.injectFieldUI(textarea);
@@ -159,14 +177,18 @@ export class JobFormDetector {
     if (!label) return false;
 
     const questionKeywords = [
-      'why are you interested', 'tell us about', 'describe your experience',
-      'what makes you', 'why do you want', 'interesting project',
-      'most challenging', 'greatest achievement', 'cover letter'
+      'why are you interested',
+      'tell us about',
+      'describe your experience',
+      'what makes you',
+      'why do you want',
+      'interesting project',
+      'most challenging',
+      'greatest achievement',
+      'cover letter',
     ];
 
-    return questionKeywords.some(keyword => 
-      label.toLowerCase().includes(keyword)
-    );
+    return questionKeywords.some(keyword => label.toLowerCase().includes(keyword));
   }
 
   /**
@@ -195,7 +217,7 @@ export class JobFormDetector {
       if (label) {
         return label.textContent || '';
       }
-      
+
       // Look for text content in parent
       const textContent = parent.textContent || '';
       return textContent.slice(0, 200); // Limit length
@@ -214,12 +236,12 @@ export class JobFormDetector {
     button.style.top = '10px';
     button.style.right = '10px';
     button.style.zIndex = '10000';
-    
+
     // Position relative to form
     const formRect = form.getBoundingClientRect();
     button.style.left = `${formRect.right - 150}px`;
     button.style.top = `${formRect.top + window.scrollY - 40}px`;
-    
+
     document.body.appendChild(button);
     this.injectedElements.add(button);
 
@@ -239,14 +261,14 @@ export class JobFormDetector {
 
     // Create AI assist button
     const button = this.createAIAssistButton();
-    
+
     // Position next to the field
     const fieldRect = field.getBoundingClientRect();
     button.style.position = 'absolute';
     button.style.left = `${fieldRect.right + window.scrollX + 10}px`;
     button.style.top = `${fieldRect.top + window.scrollY}px`;
     button.style.zIndex = '10000';
-    
+
     document.body.appendChild(button);
     this.injectedElements.add(button);
 
@@ -285,12 +307,12 @@ export class JobFormDetector {
       transition: all 0.2s;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     `;
-    
+
     button.addEventListener('mouseenter', () => {
       button.style.background = '#1d4ed8';
       button.style.transform = 'translateY(-1px)';
     });
-    
+
     button.addEventListener('mouseleave', () => {
       button.style.background = '#2563eb';
       button.style.transform = 'translateY(0)';
@@ -319,12 +341,12 @@ export class JobFormDetector {
       transition: all 0.2s;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     `;
-    
+
     button.addEventListener('mouseenter', () => {
       button.style.background = '#6d28d9';
       button.style.transform = 'translateY(-1px)';
     });
-    
+
     button.addEventListener('mouseleave', () => {
       button.style.background = '#7c3aed';
       button.style.transform = 'translateY(0)';
@@ -338,10 +360,10 @@ export class JobFormDetector {
    */
   private handleAutofillClick(form: HTMLFormElement): void {
     console.log('[Job Autofill] Autofill clicked for form:', form);
-    
+
     // Show notification
     this.showNotification('Autofill feature coming soon!', 'info');
-    
+
     // Send message to background script
     chrome.runtime.sendMessage({
       type: 'form:detected',
@@ -351,10 +373,10 @@ export class JobFormDetector {
         platform: this.detectPlatform(),
         fieldCount: form.querySelectorAll('input, textarea, select').length,
         confidence: 0.8,
-        url: window.location.href
+        url: window.location.href,
       },
       id: `content_${Date.now()}`,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -363,7 +385,7 @@ export class JobFormDetector {
    */
   private handleAIAssistClick(field: HTMLTextAreaElement): void {
     console.log('[Job Autofill] AI assist clicked for field:', field);
-    
+
     const label = this.getFieldLabel(field);
     this.showNotification(`AI assistance for: "${label.slice(0, 50)}..." - Coming soon!`, 'info');
   }
@@ -389,9 +411,9 @@ export class JobFormDetector {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       max-width: 300px;
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     // Remove after 3 seconds
     setTimeout(() => {
       if (notification.parentNode) {
@@ -412,11 +434,11 @@ export class JobFormDetector {
    */
   private detectPlatform(): string {
     const hostname = window.location.hostname.toLowerCase();
-    
+
     if (hostname.includes('linkedin.com')) return 'linkedin';
     if (hostname.includes('indeed.com')) return 'indeed';
     if (hostname.includes('workday.com')) return 'workday';
-    
+
     return 'custom';
   }
 
@@ -425,14 +447,19 @@ export class JobFormDetector {
    */
   stopMonitoring(): void {
     this.observer?.disconnect();
-    
+
+    if (this.scanTimeoutId !== null) {
+      clearTimeout(this.scanTimeoutId);
+      this.scanTimeoutId = null;
+    }
+
     // Remove injected elements
     this.injectedElements.forEach(element => {
       if (element.parentNode) {
         element.parentNode.removeChild(element);
       }
     });
-    
+
     this.injectedElements.clear();
     this.detectedForms.clear();
   }

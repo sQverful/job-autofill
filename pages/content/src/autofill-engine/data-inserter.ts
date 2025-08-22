@@ -26,9 +26,9 @@ export class DataInserter {
    * Insert data into a form field
    */
   async insertData(
-    field: FormField, 
-    value: any, 
-    source: 'profile' | 'ai' | 'default_answer' = 'profile'
+    field: FormField,
+    value: any,
+    source: 'profile' | 'ai' | 'default_answer' = 'profile',
   ): Promise<InsertionResult> {
     try {
       const element = this.findElement(field.selector);
@@ -38,8 +38,8 @@ export class DataInserter {
           error: {
             code: 'ELEMENT_NOT_FOUND',
             message: `Element not found for selector: ${field.selector}`,
-            recoverable: true
-          }
+            recoverable: true,
+          },
         };
       }
 
@@ -91,8 +91,8 @@ export class DataInserter {
             error: {
               code: 'UNSUPPORTED_OPERATION',
               message: 'File insertion should be handled by AutofillEngine using FileUploadHandler',
-              recoverable: false
-            }
+              recoverable: false,
+            },
           };
 
         default:
@@ -101,8 +101,8 @@ export class DataInserter {
             error: {
               code: 'UNSUPPORTED_FIELD_TYPE',
               message: `Unsupported field type: ${field.type}`,
-              recoverable: false
-            }
+              recoverable: false,
+            },
           };
       }
 
@@ -116,8 +116,8 @@ export class DataInserter {
             fieldId: field.id,
             selector: field.selector,
             value: finalValue,
-            source
-          }
+            source,
+          },
         };
       } else {
         return {
@@ -125,19 +125,18 @@ export class DataInserter {
           error: {
             code: 'INSERTION_FAILED',
             message: `Failed to insert value into ${field.type} field`,
-            recoverable: true
-          }
+            recoverable: true,
+          },
         };
       }
-
     } catch (error) {
       return {
         success: false,
         error: {
           code: 'UNEXPECTED_ERROR',
           message: error instanceof Error ? error.message : 'Unknown error occurred',
-          recoverable: true
-        }
+          recoverable: true,
+        },
       };
     }
   }
@@ -191,7 +190,7 @@ export class DataInserter {
         const option = element.options[i];
         const optionText = option.text.toLowerCase();
         const optionValue = option.value.toLowerCase();
-        
+
         if (optionText.includes(normalizedValue) || optionValue.includes(normalizedValue)) {
           element.selectedIndex = i;
           return true;
@@ -219,7 +218,7 @@ export class DataInserter {
     return this.withRetry(async () => {
       // Find all radio buttons with the same name
       const radioButtons = document.querySelectorAll(`input[type="radio"]${selector}`) as NodeListOf<HTMLInputElement>;
-      
+
       for (const radio of radioButtons) {
         if (radio.value === value || radio.nextElementSibling?.textContent?.trim() === value) {
           radio.checked = true;
@@ -232,7 +231,7 @@ export class DataInserter {
       for (const radio of radioButtons) {
         const radioValue = radio.value.toLowerCase();
         const radioLabel = radio.nextElementSibling?.textContent?.trim().toLowerCase() || '';
-        
+
         if (radioValue.includes(normalizedValue) || radioLabel.includes(normalizedValue)) {
           radio.checked = true;
           return true;
@@ -250,7 +249,7 @@ export class DataInserter {
     return this.withRetry(async () => {
       // Try to parse and format date
       let formattedDate = value;
-      
+
       if (value && !value.match(/^\d{4}-\d{2}-\d{2}$/)) {
         try {
           const date = new Date(value);
@@ -280,7 +279,7 @@ export class DataInserter {
       `[name="${selector}"]`,
       `[id="${selector}"]`,
       `[data-testid="${selector}"]`,
-      `[aria-label*="${selector}"]`
+      `[aria-label*="${selector}"]`,
     ];
 
     for (const fallbackSelector of fallbackSelectors) {
@@ -295,7 +294,7 @@ export class DataInserter {
    * Wait for element to be ready for interaction
    */
   private async waitForElementReady(element: Element): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       if (this.isElementReady(element)) {
         resolve();
         return;
@@ -310,7 +309,8 @@ export class DataInserter {
 
       observer.observe(element, {
         attributes: true,
-        attributeFilter: ['disabled', 'readonly', 'style']
+        // Watching style mutations can trigger excessive callbacks; limit to required attributes.
+        attributeFilter: ['disabled', 'readonly'],
       });
 
       // Timeout after 2 seconds
@@ -334,11 +334,11 @@ export class DataInserter {
    */
   private async triggerChangeEvents(element: Element): Promise<void> {
     const events = ['input', 'change', 'blur'];
-    
+
     for (const eventType of events) {
       const event = new Event(eventType, { bubbles: true, cancelable: true });
       element.dispatchEvent(event);
-      
+
       // Small delay between events
       await new Promise(resolve => setTimeout(resolve, 10));
     }
@@ -355,11 +355,9 @@ export class DataInserter {
         return await operation();
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        
+
         if (attempt < DataInserter.RETRY_ATTEMPTS) {
-          await new Promise(resolve => 
-            setTimeout(resolve, DataInserter.RETRY_DELAY * Math.pow(2, attempt - 1))
-          );
+          await new Promise(resolve => setTimeout(resolve, DataInserter.RETRY_DELAY * Math.pow(2, attempt - 1)));
         }
       }
     }
