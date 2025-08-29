@@ -1,13 +1,3 @@
-import { sampleFunction } from '@src/sample-function';
-import '@src/content-script-coordinator.js';
-import { JobFormDetector } from '@src/job-form-detector';
+import '@src/enhanced-autofill.js';
 
-console.log('[Job Autofill] Content script loaded - scanning for job application forms');
-
-// Initialize form detection
-const formDetector = new JobFormDetector();
-
-// Start monitoring for forms
-formDetector.startMonitoring();
-
-void sampleFunction();
+console.log('[Job Autofill] Enhanced autofill content script loaded - ready for user-triggered autofill with improved form detection');

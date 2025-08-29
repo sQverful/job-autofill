@@ -1,10 +1,10 @@
 import React from 'react';
-import { Input, FormField } from '@extension/ui';
-import type { UserProfile, ValidationError } from '@extension/shared';
+import { cn } from '@extension/ui';
+import type { UserProfile, ProfileValidationError } from '@extension/shared';
 
 interface PersonalInfoFormProps {
   profile: UserProfile;
-  errors: ValidationError[];
+  errors: ProfileValidationError[];
   onChange: (updates: Partial<UserProfile['personalInfo']>) => void;
 }
 
@@ -13,22 +13,62 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   errors,
   onChange,
 }) => {
-  const getFieldError = (fieldName: string) => {
-    return errors.find(error => error.field === fieldName)?.message;
+  const getFieldError = (fieldPath: string) => {
+    return errors.find(error => error.field === fieldPath)?.message;
   };
 
-  const handleInputChange = (field: keyof UserProfile['personalInfo'], value: string) => {
-    if (field === 'address') return; // Handle address separately
-    onChange({ [field]: value });
-  };
-
-  const handleAddressChange = (field: keyof UserProfile['personalInfo']['address'], value: string) => {
-    onChange({
-      address: {
-        ...profile.personalInfo.address,
+  const handleInputChange = (field: string, value: string) => {
+    if (field.startsWith('address.')) {
+      const addressField = field.replace('address.', '');
+      onChange({
+        address: {
+          ...profile.personalInfo.address,
+          [addressField]: value,
+        },
+      });
+    } else {
+      onChange({
         [field]: value,
-      },
-    });
+      });
+    }
+  };
+
+  const InputField: React.FC<{
+    label: string;
+    field: string;
+    type?: string;
+    placeholder?: string;
+    required?: boolean;
+  }> = ({ label, field, type = 'text', placeholder, required = false }) => {
+    const value = field.startsWith('address.') 
+      ? profile.personalInfo.address[field.replace('address.', '') as keyof typeof profile.personalInfo.address]
+      : profile.personalInfo[field as keyof typeof profile.personalInfo];
+    
+    const error = getFieldError(`personalInfo.${field}`);
+
+    return (
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+        <input
+          type={type}
+          value={value as string || ''}
+          onChange={(e) => handleInputChange(field, e.target.value)}
+          placeholder={placeholder}
+          className={cn(
+            'w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+            error 
+              ? 'border-red-300 dark:border-red-600' 
+              : 'border-gray-300 dark:border-gray-600',
+            'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+          )}
+        />
+        {error && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -38,164 +78,111 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
           Personal Information
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-          This information will be used to automatically fill personal details in job applications.
+          This information will be used to automatically fill out job application forms.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FormField
+        <InputField
           label="First Name"
-          error={getFieldError('personalInfo.firstName')}
+          field="firstName"
+          placeholder="John"
           required
-        >
-          <Input
-            value={profile.personalInfo.firstName}
-            onChange={(e) => handleInputChange('firstName', e.target.value)}
-            placeholder="Enter your first name"
-          />
-        </FormField>
-
-        <FormField
+        />
+        
+        <InputField
           label="Last Name"
-          error={getFieldError('personalInfo.lastName')}
+          field="lastName"
+          placeholder="Doe"
           required
-        >
-          <Input
-            value={profile.personalInfo.lastName}
-            onChange={(e) => handleInputChange('lastName', e.target.value)}
-            placeholder="Enter your last name"
-          />
-        </FormField>
-
-        <FormField
+        />
+        
+        <InputField
           label="Email Address"
-          error={getFieldError('personalInfo.email')}
+          field="email"
+          type="email"
+          placeholder="john.doe@example.com"
           required
-        >
-          <Input
-            type="email"
-            value={profile.personalInfo.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            placeholder="your.email@example.com"
-          />
-        </FormField>
-
-        <FormField
+        />
+        
+        <InputField
           label="Phone Number"
-          error={getFieldError('personalInfo.phone')}
+          field="phone"
+          type="tel"
+          placeholder="+1 (555) 123-4567"
           required
-        >
-          <Input
-            type="tel"
-            value={profile.personalInfo.phone}
-            onChange={(e) => handleInputChange('phone', e.target.value)}
-            placeholder="(555) 123-4567"
-          />
-        </FormField>
-
-        <FormField
-          label="LinkedIn URL"
-          error={getFieldError('personalInfo.linkedInUrl')}
-        >
-          <Input
-            type="url"
-            value={profile.personalInfo.linkedInUrl || ''}
-            onChange={(e) => handleInputChange('linkedInUrl', e.target.value)}
-            placeholder="https://linkedin.com/in/yourprofile"
-          />
-        </FormField>
-
-        <FormField
-          label="Portfolio URL"
-          error={getFieldError('personalInfo.portfolioUrl')}
-        >
-          <Input
-            type="url"
-            value={profile.personalInfo.portfolioUrl || ''}
-            onChange={(e) => handleInputChange('portfolioUrl', e.target.value)}
-            placeholder="https://yourportfolio.com"
-          />
-        </FormField>
-
-        <FormField
-          label="GitHub URL"
-          error={getFieldError('personalInfo.githubUrl')}
-        >
-          <Input
-            type="url"
-            value={profile.personalInfo.githubUrl || ''}
-            onChange={(e) => handleInputChange('githubUrl', e.target.value)}
-            placeholder="https://github.com/yourusername"
-          />
-        </FormField>
+        />
       </div>
 
       <div>
         <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-4">
           Address
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="md:col-span-2">
-            <FormField
-              label="Street Address"
-              error={getFieldError('personalInfo.address.street')}
+        <div className="grid grid-cols-1 gap-4">
+          <InputField
+            label="Street Address"
+            field="address.street"
+            placeholder="123 Main Street"
+            required
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <InputField
+              label="City"
+              field="address.city"
+              placeholder="New York"
               required
-            >
-              <Input
-                value={profile.personalInfo.address.street}
-                onChange={(e) => handleAddressChange('street', e.target.value)}
-                placeholder="123 Main Street"
-              />
-            </FormField>
+            />
+            
+            <InputField
+              label="State/Province"
+              field="address.state"
+              placeholder="NY"
+              required
+            />
+            
+            <InputField
+              label="ZIP/Postal Code"
+              field="address.zipCode"
+              placeholder="10001"
+              required
+            />
           </div>
-
-          <FormField
-            label="City"
-            error={getFieldError('personalInfo.address.city')}
-            required
-          >
-            <Input
-              value={profile.personalInfo.address.city}
-              onChange={(e) => handleAddressChange('city', e.target.value)}
-              placeholder="San Francisco"
-            />
-          </FormField>
-
-          <FormField
-            label="State/Province"
-            error={getFieldError('personalInfo.address.state')}
-            required
-          >
-            <Input
-              value={profile.personalInfo.address.state}
-              onChange={(e) => handleAddressChange('state', e.target.value)}
-              placeholder="CA"
-            />
-          </FormField>
-
-          <FormField
-            label="ZIP/Postal Code"
-            error={getFieldError('personalInfo.address.zipCode')}
-            required
-          >
-            <Input
-              value={profile.personalInfo.address.zipCode}
-              onChange={(e) => handleAddressChange('zipCode', e.target.value)}
-              placeholder="94105"
-            />
-          </FormField>
-
-          <FormField
+          
+          <InputField
             label="Country"
-            error={getFieldError('personalInfo.address.country')}
+            field="address.country"
+            placeholder="United States"
             required
-          >
-            <Input
-              value={profile.personalInfo.address.country}
-              onChange={(e) => handleAddressChange('country', e.target.value)}
-              placeholder="United States"
-            />
-          </FormField>
+          />
+        </div>
+      </div>
+
+      <div>
+        <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-4">
+          Professional Links (Optional)
+        </h4>
+        <div className="grid grid-cols-1 gap-4">
+          <InputField
+            label="LinkedIn Profile"
+            field="linkedInUrl"
+            type="url"
+            placeholder="https://linkedin.com/in/johndoe"
+          />
+          
+          <InputField
+            label="Portfolio Website"
+            field="portfolioUrl"
+            type="url"
+            placeholder="https://johndoe.com"
+          />
+          
+          <InputField
+            label="GitHub Profile"
+            field="githubUrl"
+            type="url"
+            placeholder="https://github.com/johndoe"
+          />
         </div>
       </div>
     </div>

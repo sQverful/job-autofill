@@ -7,3 +7,4 @@ export * from './Textarea';
 export * from './Select';
 export * from './Button';
 export * from './FileUpload';
+export * from './Switch';

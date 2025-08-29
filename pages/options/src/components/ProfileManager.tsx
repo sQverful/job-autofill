@@ -6,6 +6,7 @@ import { PersonalInfoForm } from './PersonalInfoForm';
 import { ProfessionalInfoForm } from './ProfessionalInfoForm';
 import { ResumeUpload } from './ResumeUpload';
 import { DefaultAnswersForm } from './DefaultAnswersForm';
+import { TestDataManager } from './TestDataManager';
 import { ResumeParserService } from '../services/resumeParser';
 
 interface ProfileManagerProps {
@@ -72,16 +73,47 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
 }) => {
   const [profile, setProfile] = useState<UserProfile>(createDefaultProfile());
   const [validation, setValidation] = useState<ProfileValidationResult>({ isValid: true, errors: [], warnings: [] });
-  const [activeSection, setActiveSection] = useState<'personal' | 'professional' | 'documents' | 'answers'>('personal');
+  const [activeSection, setActiveSection] = useState<'personal' | 'professional' | 'documents' | 'answers' | 'testdata'>('personal');
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Validate profile whenever it changes
+  // Load existing profile from storage on component mount
   useEffect(() => {
-    const validationResult = validateUserProfile(profile);
-    setValidation(validationResult);
-    setHasUnsavedChanges(true);
-  }, [profile]);
+    const loadProfile = async () => {
+      try {
+        setIsLoading(true);
+        const { profileStorage } = await import('@extension/storage');
+        const existingProfile = await profileStorage.get();
+        
+        // Only use existing profile if it has meaningful data (not just default empty profile)
+        if (existingProfile && (existingProfile.id || existingProfile.personalInfo.firstName)) {
+          setProfile(existingProfile);
+          setHasUnsavedChanges(false); // Profile is loaded from storage, so no unsaved changes
+        } else {
+          setProfile(createDefaultProfile());
+          setHasUnsavedChanges(false);
+        }
+      } catch (error) {
+        console.error('Failed to load profile:', error);
+        setProfile(createDefaultProfile());
+        setHasUnsavedChanges(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
+  // Validate profile whenever it changes (but not on initial load)
+  useEffect(() => {
+    if (!isLoading) {
+      const validationResult = validateUserProfile(profile);
+      setValidation(validationResult);
+      setHasUnsavedChanges(true);
+    }
+  }, [profile, isLoading]);
 
   const handlePersonalInfoChange = (updates: Partial<UserProfile['personalInfo']>) => {
     setProfile(prev => ({
@@ -214,12 +246,63 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
     }
   };
 
+  const handleApplyTestData = (testProfile: UserProfile) => {
+    // Generate new ID if the test profile doesn't have one
+    const profileWithId = {
+      ...testProfile,
+      id: testProfile.id || `profile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      metadata: {
+        ...testProfile.metadata,
+        updatedAt: new Date(),
+      },
+    };
+    
+    setProfile(profileWithId);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSaveTestProfile = async (testProfile: UserProfile) => {
+    // This function is called by TestDataManager to save the profile immediately
+    if (onSave) {
+      try {
+        await onSave(testProfile);
+        // Update the local state to reflect the saved profile
+        setProfile(testProfile);
+        setHasUnsavedChanges(false);
+      } catch (error) {
+        console.error('Failed to save test profile:', error);
+        throw error;
+      }
+    }
+  };
+
+  const handleClearTestData = () => {
+    const confirmed = window.confirm('This will clear all profile data and return to an empty profile. Are you sure?');
+    if (confirmed) {
+      setProfile(createDefaultProfile());
+      setHasUnsavedChanges(true);
+    }
+  };
+
   const sections = [
     { id: 'personal', label: 'Personal Information' },
     { id: 'professional', label: 'Professional Information' },
     { id: 'documents', label: 'Documents & Resume' },
     { id: 'answers', label: 'Default Answers' },
+    { id: 'testdata', label: 'Test Data' },
   ] as const;
+
+  // Show loading spinner while profile is being loaded
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 flex items-center justify-center min-h-96">
+        <div className="flex items-center space-x-3">
+          <LoadingSpinner />
+          <span className="text-gray-600 dark:text-gray-400">Loading profile...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -313,6 +396,15 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
             profile={profile}
             errors={validation.errors}
             onChange={handlePreferencesChange}
+          />
+        )}
+
+        {activeSection === 'testdata' && (
+          <TestDataManager
+            onApplyTestData={handleApplyTestData}
+            onClearTestData={handleClearTestData}
+            onSaveProfile={handleSaveTestProfile}
+            currentProfile={profile}
           />
         )}
       </div>

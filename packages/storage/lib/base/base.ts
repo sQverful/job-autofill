@@ -92,11 +92,21 @@ export const createStorage = <D = string>(
     checkStoragePermission(storageEnum);
     const value = await chrome?.storage[storageEnum].get([key]);
 
-    if (!value) {
+    if (!value || value[key] === undefined || value[key] === null) {
       return fallback;
     }
 
-    return deserialize(value[key]) ?? fallback;
+    // Handle cases where the value is the string "undefined" or "null"
+    if (typeof value[key] === 'string' && (value[key] === 'undefined' || value[key] === 'null')) {
+      return fallback;
+    }
+
+    try {
+      return deserialize(value[key]) ?? fallback;
+    } catch (error) {
+      console.warn(`Failed to deserialize storage value for key "${key}":`, error);
+      return fallback;
+    }
   };
 
   const set = async (valueOrUpdate: ValueOrUpdateType<D>) => {

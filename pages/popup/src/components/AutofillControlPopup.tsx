@@ -1,66 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import { cn, Button, LoadingSpinner } from '@extension/ui';
 import { useStorage } from '@extension/shared';
-import { exampleThemeStorage } from '@extension/storage';
-import { PageStatusDisplay } from './PageStatusDisplay';
-import { AutofillTrigger } from './AutofillTrigger';
-import { QuickSettings } from './QuickSettings';
-import { ActivitySummary } from './ActivitySummary';
-import { ExtensionStatusFeedback } from './ExtensionStatusFeedback';
-import type { 
-  ExtensionMessage, 
-  AutofillStatusMessage, 
-  FormDetectedMessage,
-  AuthStatusMessage,
-  FormCheckMessage,
-  ActivityRecentMessage,
-  AutofillTriggerMessage
-} from '../../../../chrome-extension/src/background/messaging/message-types';
+import { exampleThemeStorage, profileStorage } from '@extension/storage';
+import type { UserProfile } from '@extension/shared';
 
 interface PopupState {
   currentTab: chrome.tabs.Tab | null;
-  isAuthenticated: boolean;
-  formDetected: boolean;
-  autofillStatus: 'idle' | 'detecting' | 'filling' | 'complete' | 'error';
-  autofillProgress: number;
+  profile: UserProfile | null;
+  profileComplete: boolean;
+  autofillStatus: 'idle' | 'analyzing' | 'filling' | 'complete' | 'error';
   error: string | null;
-  platform: string | null;
-  fieldCount: number;
-  confidence: number;
-  recentActions: RecentAction[];
+  lastResult: AutofillResult | null;
 }
 
-interface RecentAction {
-  id: string;
-  type: 'autofill' | 'form_detected' | 'profile_updated';
-  timestamp: Date;
-  description: string;
+interface AutofillResult {
   success: boolean;
+  filledCount: number;
+  totalFields: number;
+  platform: string;
+  duration: number;
 }
 
 export const AutofillControlPopup: React.FC = () => {
   const { isLight } = useStorage(exampleThemeStorage);
   const [state, setState] = useState<PopupState>({
     currentTab: null,
-    isAuthenticated: false,
-    formDetected: false,
+    profile: null,
+    profileComplete: false,
     autofillStatus: 'idle',
-    autofillProgress: 0,
     error: null,
-    platform: null,
-    fieldCount: 0,
-    confidence: 0,
-    recentActions: []
+    lastResult: null
   });
   const [loading, setLoading] = useState(true);
 
   // Initialize popup state
   useEffect(() => {
     initializePopup();
-    setupMessageListeners();
-    
+  }, []);
+
+  // Listen for profile changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      initializePopup();
+    };
+
+    // Listen for storage changes
+    chrome.storage.onChanged.addListener(handleStorageChange);
+
     return () => {
-      // Cleanup listeners if needed
+      chrome.storage.onChanged.removeListener(handleStorageChange);
     };
   }, []);
 
@@ -71,138 +59,44 @@ export const AutofillControlPopup: React.FC = () => {
       // Get current tab
       const [tab] = await chrome.tabs.query({ currentWindow: true, active: true });
       
-      // Set basic state first
+      // Load profile and check completion
+      const profile = await profileStorage.get();
+      const profileComplete = await profileStorage.isProfileComplete();
+      
+      console.log('Profile loaded:', { 
+        hasProfile: !!profile, 
+        profileComplete, 
+        profileId: profile?.id,
+        firstName: profile?.personalInfo?.firstName,
+        email: profile?.personalInfo?.email 
+      });
+      
       setState(prev => ({
         ...prev,
         currentTab: tab,
-        isAuthenticated: false, // Default to false
-        formDetected: false, // Default to false
-        platform: null,
-        fieldCount: 0,
-        confidence: 0,
-        recentActions: []
+        profile,
+        profileComplete
       }));
-
-      // Try to get auth status with timeout
-      try {
-        const authResponse = await Promise.race([
-          sendMessage({
-            type: 'auth:status',
-            source: 'popup'
-          }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 2000))
-        ]);
-        
-        setState(prev => ({
-          ...prev,
-          isAuthenticated: authResponse?.data?.isAuthenticated || false
-        }));
-      } catch (error) {
-        console.warn('Auth check failed:', error);
-      }
-
-      // Try to check form detection with timeout
-      if (tab.id) {
-        try {
-          const formResponse = await Promise.race([
-            sendMessage({
-              type: 'form:check',
-              source: 'popup',
-              data: { tabId: tab.id }
-            } as FormCheckMessage),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Form check timeout')), 2000))
-          ]);
-          
-          setState(prev => ({
-            ...prev,
-            formDetected: formResponse?.data?.detected || false,
-            platform: formResponse?.data?.platform || null,
-            fieldCount: formResponse?.data?.fieldCount || 0,
-            confidence: formResponse?.data?.confidence || 0
-          }));
-        } catch (error) {
-          console.warn('Form check failed:', error);
-        }
-      }
-
-      // Try to get recent actions with timeout
-      try {
-        const actionsResponse = await Promise.race([
-          sendMessage({
-            type: 'activity:recent',
-            source: 'popup'
-          } as ActivityRecentMessage),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Activity timeout')), 2000))
-        ]);
-        
-        setState(prev => ({
-          ...prev,
-          recentActions: actionsResponse?.data?.actions || []
-        }));
-      } catch (error) {
-        console.warn('Activity check failed:', error);
-      }
 
     } catch (error) {
       console.error('Failed to initialize popup:', error);
       setState(prev => ({
         ...prev,
-        error: 'Failed to initialize extension',
-        currentTab: null,
-        isAuthenticated: false,
-        formDetected: false
+        error: 'Failed to initialize extension'
       }));
     } finally {
       setLoading(false);
     }
   };
 
-  const setupMessageListeners = () => {
-    const handleMessage = (message: ExtensionMessage) => {
-      switch (message.type) {
-        case 'autofill:status':
-          const statusMsg = message as AutofillStatusMessage;
-          setState(prev => ({
-            ...prev,
-            autofillStatus: statusMsg.data.status,
-            autofillProgress: statusMsg.data.progress || 0,
-            error: statusMsg.data.error || null
-          }));
-          break;
-          
-        case 'form:detected':
-          const formMsg = message as FormDetectedMessage;
-          setState(prev => ({
-            ...prev,
-            formDetected: true,
-            platform: formMsg.data.platform,
-            fieldCount: formMsg.data.fieldCount,
-            confidence: formMsg.data.confidence
-          }));
-          break;
-          
-        case 'auth:status':
-          const authMsg = message as AuthStatusMessage;
-          setState(prev => ({
-            ...prev,
-            isAuthenticated: authMsg.data.isAuthenticated
-          }));
-          break;
-      }
-    };
-
-    chrome.runtime.onMessage.addListener(handleMessage);
-  };
-
-  const sendMessage = async (message: Omit<ExtensionMessage, 'id' | 'timestamp'>): Promise<any> => {
+  const sendMessageToTab = async (message: any): Promise<any> => {
     return new Promise((resolve, reject) => {
-      const fullMessage = {
-        ...message,
-        id: `popup_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: Date.now()
-      };
+      if (!state.currentTab?.id) {
+        reject(new Error('No active tab'));
+        return;
+      }
 
-      chrome.runtime.sendMessage(fullMessage, (response) => {
+      chrome.tabs.sendMessage(state.currentTab.id, message, (response) => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else {
@@ -212,28 +106,65 @@ export const AutofillControlPopup: React.FC = () => {
     });
   };
 
-  const handleAutofillTrigger = async () => {
-    if (!state.currentTab?.id) return;
+  const handleFillOutForm = async () => {
+    if (!state.currentTab?.id || !state.profileComplete) return;
     
     try {
-      setState(prev => ({ ...prev, autofillStatus: 'filling', error: null }));
+      setState(prev => ({ ...prev, autofillStatus: 'analyzing', error: null }));
       
-      await sendMessage({
+      // Send message to content script to trigger autofill
+      const result = await sendMessageToTab({
         type: 'autofill:trigger',
-        source: 'popup',
-        data: { tabId: state.currentTab.id! }
-      } as AutofillTriggerMessage);
+        data: { tabId: state.currentTab.id }
+      });
+
+      if (result.success) {
+        setState(prev => ({
+          ...prev,
+          autofillStatus: 'complete',
+          lastResult: {
+            success: true,
+            filledCount: result.filledCount,
+            totalFields: result.totalFields,
+            platform: result.platform || 'unknown',
+            duration: result.duration
+          }
+        }));
+      } else {
+        throw new Error(result.error || 'Autofill failed');
+      }
     } catch (error) {
       setState(prev => ({
         ...prev,
         autofillStatus: 'error',
-        error: 'Failed to trigger autofill'
+        error: error instanceof Error ? error.message : 'Failed to fill form'
       }));
     }
   };
 
   const handleOpenOptions = () => {
     chrome.runtime.openOptionsPage();
+  };
+
+  const getStatusMessage = () => {
+    if (!state.profileComplete) {
+      return 'Please complete your profile to use autofill';
+    }
+    
+    switch (state.autofillStatus) {
+      case 'analyzing':
+        return 'Analyzing page for forms...';
+      case 'filling':
+        return 'Filling out form...';
+      case 'complete':
+        return state.lastResult 
+          ? `Successfully filled ${state.lastResult.filledCount} of ${state.lastResult.totalFields} fields`
+          : 'Form filled successfully';
+      case 'error':
+        return state.error || 'An error occurred';
+      default:
+        return 'Ready to fill forms on job application pages';
+    }
   };
 
   if (loading) {
@@ -269,55 +200,106 @@ export const AutofillControlPopup: React.FC = () => {
         </Button>
       </div>
 
-      {/* Authentication Status */}
-      {!state.isAuthenticated && (
+      {/* Profile Status */}
+      {!state.profileComplete && (
         <div className={cn(
           'p-3 rounded-lg border',
           isLight ? 'bg-yellow-50 border-yellow-200 text-yellow-800' : 'bg-yellow-900/20 border-yellow-700 text-yellow-300'
         )}>
-          <p className="text-sm">Please sign in to use autofill features.</p>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleOpenOptions}
-            className="mt-2 w-full"
-          >
-            Sign In
-          </Button>
+          <p className="text-sm">Please complete your profile to use autofill features.</p>
+          <div className="flex space-x-2 mt-2">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleOpenOptions}
+              className="flex-1"
+            >
+              Complete Profile
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={initializePopup}
+              className="px-3"
+            >
+              ↻
+            </Button>
+          </div>
         </div>
       )}
 
-      {/* Page Status Display */}
-      <PageStatusDisplay
-        currentTab={state.currentTab}
-        formDetected={state.formDetected}
-        platform={state.platform}
-        fieldCount={state.fieldCount}
-        confidence={state.confidence}
-      />
+      {/* Current Page Info */}
+      <div className={cn(
+        'p-3 rounded-lg border',
+        isLight ? 'bg-gray-50 border-gray-200' : 'bg-gray-800 border-gray-700'
+      )}>
+        <div className="flex items-center space-x-2 mb-2">
+          <div className={cn(
+            'w-2 h-2 rounded-full',
+            state.currentTab ? 'bg-green-500' : 'bg-red-500'
+          )} />
+          <span className="text-sm font-medium">
+            {state.currentTab ? 'Page Active' : 'No Active Page'}
+          </span>
+        </div>
+        {state.currentTab && (
+          <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+            {state.currentTab.title}
+          </p>
+        )}
+      </div>
 
-      {/* Autofill Trigger */}
-      {state.isAuthenticated && (
-        <AutofillTrigger
-          formDetected={state.formDetected}
-          autofillStatus={state.autofillStatus}
-          onTrigger={handleAutofillTrigger}
-          disabled={!state.formDetected || state.autofillStatus === 'filling'}
-        />
+      {/* Fill Out Button */}
+      <div className="space-y-3">
+        <Button
+          variant="primary"
+          size="lg"
+          onClick={handleFillOutForm}
+          disabled={!state.profileComplete || state.autofillStatus === 'analyzing' || state.autofillStatus === 'filling'}
+          className="w-full"
+        >
+          {(state.autofillStatus === 'analyzing' || state.autofillStatus === 'filling') && (
+            <div className="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          )}
+          Fill Out Form
+        </Button>
+        
+        <p className={cn(
+          'text-xs text-center',
+          state.autofillStatus === 'error' ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'
+        )}>
+          {getStatusMessage()}
+        </p>
+      </div>
+
+      {/* Last Result */}
+      {state.lastResult && state.autofillStatus === 'complete' && (
+        <div className={cn(
+          'p-3 rounded-lg border',
+          isLight ? 'bg-green-50 border-green-200 text-green-800' : 'bg-green-900/20 border-green-700 text-green-300'
+        )}>
+          <div className="text-sm">
+            <div className="font-medium">Autofill Complete</div>
+            <div className="mt-1 space-y-1">
+              <div>Fields filled: {state.lastResult.filledCount}/{state.lastResult.totalFields}</div>
+              <div>Platform: {state.lastResult.platform}</div>
+              <div>Duration: {state.lastResult.duration}ms</div>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Extension Status and Feedback */}
-      <ExtensionStatusFeedback
-        status={state.autofillStatus}
-        progress={state.autofillProgress}
-        error={state.error}
-      />
-
-      {/* Quick Settings */}
-      <QuickSettings />
-
-      {/* Activity Summary */}
-      <ActivitySummary actions={state.recentActions} />
+      {/* Quick Actions */}
+      <div className="space-y-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleOpenOptions}
+          className="w-full"
+        >
+          Manage Profile
+        </Button>
+      </div>
     </div>
   );
 };
