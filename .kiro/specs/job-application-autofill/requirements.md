@@ -126,3 +126,46 @@ The Job Application Autofill Chrome Extension is designed to streamline and auto
 5. WHEN autofill is partially successful THEN the system SHALL indicate which fields still need manual completion
 6. WHEN users want to undo autofill THEN the system SHALL provide an option to clear filled fields
 7. WHEN the extension is active THEN it SHALL provide clear visual indicators of its status and capabilities
+
+### Requirement 10
+
+**User Story:** As a job seeker, I want the extension to intelligently detect and fill all types of form inputs including modern web components, so that no fields are missed during autofill.
+
+#### Acceptance Criteria
+
+1. WHEN the system encounters React Select components THEN it SHALL detect and fill them using appropriate interaction methods
+2. WHEN the system encounters Vue.js select components THEN it SHALL detect and fill them using component-specific methods
+3. WHEN the system encounters Angular Material components THEN it SHALL detect and fill them using framework-specific selectors
+4. WHEN the system encounters custom dropdown components THEN it SHALL use intelligent pattern matching to identify and interact with them
+5. WHEN the system encounters multi-step forms THEN it SHALL detect form changes and continue autofill across steps
+6. WHEN the system encounters dynamically loaded content THEN it SHALL re-scan for new fields and continue autofill
+7. WHEN the system encounters shadow DOM components THEN it SHALL penetrate shadow boundaries to detect fields
+8. WHEN the system encounters iframe-embedded forms THEN it SHALL detect and handle cross-frame form filling
+
+### Requirement 11
+
+**User Story:** As a job seeker, I want the extension to successfully attach my resume files to application forms, so that I don't have to manually upload files repeatedly.
+
+#### Acceptance Criteria
+
+1. WHEN the system detects file upload fields THEN it SHALL identify them with high accuracy using multiple detection methods
+2. WHEN the system attempts file attachment THEN it SHALL use browser APIs to programmatically attach files where possible
+3. WHEN browser security prevents automatic file attachment THEN the system SHALL provide clear guidance and pre-populate file selection dialogs
+4. WHEN multiple file types are supported THEN the system SHALL select the appropriate resume format for each field
+5. WHEN file upload fails THEN the system SHALL provide specific error messages and alternative upload methods
+6. WHEN file fields require specific formats THEN the system SHALL validate and convert files as needed
+7. WHEN drag-and-drop upload is available THEN the system SHALL simulate drag-and-drop interactions
+
+### Requirement 12
+
+**User Story:** As a job seeker, I want the extension to work across all major job platforms with intelligent form detection, so that I can use it on any job site regardless of their technology stack.
+
+#### Acceptance Criteria
+
+1. WHEN the system encounters unknown job platforms THEN it SHALL use generalized form detection algorithms
+2. WHEN the system detects form patterns THEN it SHALL learn and adapt to new platform structures
+3. WHEN the system encounters complex form layouts THEN it SHALL use multiple detection strategies in parallel
+4. WHEN the system finds similar field patterns THEN it SHALL apply learned mappings to new platforms
+5. WHEN the system encounters accessibility-enhanced forms THEN it SHALL leverage ARIA labels and roles for field identification
+6. WHEN the system detects form validation THEN it SHALL respect validation rules and provide compliant data
+7. WHEN the system encounters internationalized forms THEN it SHALL handle multiple languages and locales

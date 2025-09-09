@@ -1,6 +1,21 @@
 @import '@extension/ui/global.css';
 
 body {
-  width: 300px;
-  height: 260px;
+  /* Fixed size for desktop browsers - optimal for Chrome extensions */
+  width: 480px;
+  height: 700px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Ensure proper theme application */
+.light-theme {
+  background-color: #ffffff;
+  color: #1e293b;
+}
+
+.dark-theme {
+  background-color: #0f172a;
+  color: #f8fafc;
 }

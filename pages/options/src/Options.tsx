@@ -25,22 +25,28 @@ const Options = () => {
   };
 
   return (
-    <div className={cn('min-h-screen', isLight ? 'bg-slate-50 text-gray-900' : 'bg-gray-800 text-gray-100')}>
+    <div className={cn('min-h-screen', isLight ? 'bg-slate-50 text-gray-900' : 'bg-gray-900 text-gray-100')}>
       {/* Header */}
-      <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
+      <header className={cn(
+        'shadow-sm border-b',
+        isLight ? 'bg-white border-gray-200' : 'bg-gray-800 border-gray-700'
+      )}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <button onClick={goGithubSite}>
                 <img src={chrome.runtime.getURL(logo)} className="h-8" alt="logo" />
               </button>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              <h1 className={cn(
+                'text-xl font-semibold',
+                isLight ? 'text-gray-900' : 'text-gray-100'
+              )}>
                 Job Application Autofill
               </h1>
             </div>
             
             <div className="flex items-center space-x-4">
-              <ToggleButton onClick={exampleThemeStorage.toggle}>
+              <ToggleButton showLabel={true}>
                 {t('toggleTheme')}
               </ToggleButton>
             </div>

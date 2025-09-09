@@ -1,5 +1,7 @@
 import React from 'react';
 import { cn } from '@extension/ui';
+import { useStorage } from '@extension/shared';
+import { exampleThemeStorage } from '@extension/storage';
 import type { UserProfile, ProfileValidationError } from '@extension/shared';
 
 interface PersonalInfoFormProps {
@@ -29,6 +31,7 @@ const InputField: React.FC<InputFieldProps> = ({
   getFieldError,
   handleInputChange,
 }) => {
+  const { isLight } = useStorage(exampleThemeStorage);
   const value = field.startsWith('address.')
     ? profile.personalInfo.address[field.replace('address.', '') as keyof typeof profile.personalInfo.address]
     : profile.personalInfo[field as keyof typeof profile.personalInfo];
@@ -37,7 +40,10 @@ const InputField: React.FC<InputFieldProps> = ({
 
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label className={cn(
+        'mb-1 block text-sm font-medium',
+        isLight ? 'text-gray-700' : 'text-gray-300'
+      )}>
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
@@ -46,17 +52,27 @@ const InputField: React.FC<InputFieldProps> = ({
         onChange={e => handleInputChange(field, e.target.value)}
         placeholder={placeholder}
         className={cn(
-          'w-full rounded-md border px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500',
-          error ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600',
-          'bg-white text-gray-900 dark:bg-gray-700 dark:text-gray-100',
+          'w-full rounded-md border px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors',
+          error 
+            ? (isLight ? 'border-red-300' : 'border-red-600')
+            : (isLight ? 'border-gray-300' : 'border-gray-600'),
+          isLight 
+            ? 'bg-white text-gray-900' 
+            : 'bg-gray-700 text-gray-100',
         )}
       />
-      {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && (
+        <p className={cn(
+          'mt-1 text-sm',
+          isLight ? 'text-red-600' : 'text-red-400'
+        )}>{error}</p>
+      )}
     </div>
   );
 };
 
 export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ profile, errors, onChange }) => {
+  const { isLight } = useStorage(exampleThemeStorage);
   const getFieldError = (fieldPath: string) => {
     return errors.find(error => error.field === fieldPath)?.message;
   };
@@ -80,8 +96,14 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ profile, err
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">Personal Information</h3>
-        <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+        <h3 className={cn(
+          'mb-4 text-lg font-medium',
+          isLight ? 'text-gray-900' : 'text-gray-100'
+        )}>Personal Information</h3>
+        <p className={cn(
+          'mb-6 text-sm',
+          isLight ? 'text-gray-600' : 'text-gray-400'
+        )}>
           This information will be used to automatically fill out job application forms.
         </p>
       </div>
@@ -131,7 +153,10 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ profile, err
       </div>
 
       <div>
-        <h4 className="text-md mb-4 font-medium text-gray-900 dark:text-gray-100">Address</h4>
+        <h4 className={cn(
+          'text-md mb-4 font-medium',
+          isLight ? 'text-gray-900' : 'text-gray-100'
+        )}>Address</h4>
         <div className="grid grid-cols-1 gap-4">
           <InputField
             label="Street Address"
@@ -188,7 +213,10 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ profile, err
       </div>
 
       <div>
-        <h4 className="text-md mb-4 font-medium text-gray-900 dark:text-gray-100">Professional Links (Optional)</h4>
+        <h4 className={cn(
+          'text-md mb-4 font-medium',
+          isLight ? 'text-gray-900' : 'text-gray-100'
+        )}>Professional Links (Optional)</h4>
         <div className="grid grid-cols-1 gap-4">
           <InputField
             label="LinkedIn Profile"

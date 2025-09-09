@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Select Forms Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .application--questions {
+            margin: 20px 0;
+        }
+
+        .select__container {
+            margin-bottom: 20px;
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .select-shell {
+            position: relative;
+        }
+
+        .select__control {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 8px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .select__placeholder {
+            color: #999;
+        }
+
+        .select__input {
+            border: none;
+            outline: none;
+            background: transparent;
+        }
+
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="test-section">
+        <h2>🧪 React Select Forms Test</h2>
+        <p>Testing enhanced autofill with React Select components based on real job application forms.</p>
+    </div>
+
+    <!-- Exact React Select structure from user's example -->
+    <div class="test-section">
+        <h3>Real React Select Example (from user's form)</h3>
+        <div class="application--questions">
+            <div>
+                <div class="select">
+                    <div class="select__container">
+                        <label id="question_55448310-label" for="question_55448310" class="label select__label">
+                            🇺🇸 Are you a US person?<span aria-hidden="true">*</span>
+                        </label>
+                        <div class="select-shell remix-css-b62m3t-container">
+                            <div>
+                                <div class="select__control remix-css-13cymwt-control">
+                                    <div class="select__value-container remix-css-hlgwow">
+                                        <div class="select__placeholder remix-css-1jqq78o-placeholder"
+                                            id="react-select-question_55448310-placeholder">Select...</div>
+                                        <div class="select__input-container remix-css-19bb58m" data-value="">
+                                            <input class="select__input" id="question_55448310" role="combobox"
+                                                aria-labelledby="question_55448310-label" aria-required="true"
+                                                type="text" value="">
+                                        </div>
+                                    </div>
+                                    <div class="select__indicators remix-css-1wy0on6">
+                                        <button type="button" class="icon-button icon-button--sm"
+                                            aria-label="Toggle flyout" tabindex="-1">
+                                            <svg class="svg-icon" fill="none" height="20" width="20"
+                                                viewBox="0 0 24 24">
+                                                <path
+                                                    d="M11.4534 16.0667L5.90983 9.13729C5.54316 8.67895 5.86948 8 6.45644 8H17.5436C18.1305 8 18.4568 8.67895 18.0902 9.13729L12.5466 16.0667C12.2664 16.417 11.7336 16.417 11.4534 16.0667Z">
+                                                </path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <input required="" tabindex="-1" aria-hidden="true" class="remix-css-1a0ro4n-requiredInput"
+                                value="">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- UK Right to Work Select -->
+    <div class="test-section">
+        <div class="select">
+            <div class="select__container">
+                <label id="question_55448311-label" for="question_55448311" class="label select__label">
+                    🛂 Please confirm your UK Right to Work status.<span aria-hidden="true">*</span>
+                </label>
+                <div class="select-shell">
+                    <div class="select__control">
+                        <div class="select__value-container">
+                            <div class="select__placeholder">Select...</div>
+                            <div class="select__input-container">
+                                <input class="select__input" id="question_55448311" role="combobox"
+                                    aria-labelledby="question_55448311-label" aria-required="true" type="text" value="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Text inputs for pronouns and name pronunciation -->
+    <div class="test-section">
+        <div class="text-input-wrapper">
+            <div class="input-wrapper">
+                <label id="question_55448313-label" for="question_55448313" class="label">
+                    If you'd like to, please share your preferred pronouns (eg. they/them/theirs, she/her/hers).
+                </label>
+                <input id="question_55448313" class="input input__single-line" type="text" maxlength="255" value="">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('React Select test page loaded');
+        console.log('Test the enhanced autofill on these React Select components');
+    </script>
+</body>
+
+</html>

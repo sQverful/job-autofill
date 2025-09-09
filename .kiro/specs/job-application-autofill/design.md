@@ -154,6 +154,24 @@ graph TB
 
 ### Platform Integration Modules
 
+#### Intelligent Form Detection Engine (`pages/content/src/detection/intelligent-detector.ts`)
+- **Multi-Strategy Detection**: Combines CSS selectors, ARIA roles, and pattern matching
+- **Framework Detection**: Identifies React, Vue, Angular, and custom components
+- **Adaptive Learning**: Learns from successful form interactions
+- **Shadow DOM Support**: Penetrates shadow boundaries for modern web components
+
+#### Enhanced File Upload Handler (`pages/content/src/upload/smart-uploader.ts`)
+- **Multi-Method Attachment**: Uses File API, drag-drop simulation, and clipboard integration
+- **Format Intelligence**: Automatically selects appropriate file formats
+- **Security Workarounds**: Implements browser-specific file attachment strategies
+- **User Guidance**: Provides step-by-step upload assistance when automation fails
+
+#### Universal Component Handler (`pages/content/src/components/universal-handler.ts`)
+- **React Select Support**: Handles all React Select variants and versions
+- **Vue Component Support**: Detects and interacts with Vue.js form components
+- **Angular Material Support**: Handles Material Design components
+- **Custom Component Detection**: Uses pattern matching for proprietary components
+
 #### LinkedIn Integration (`pages/content/src/platforms/linkedin.ts`)
 - **Selectors**: Easy Apply forms, profile import fields
 - **Special Handling**: Dynamic form loading, multi-step applications
@@ -168,6 +186,16 @@ graph TB
 - **Selectors**: Career portal forms, multi-page applications
 - **Special Handling**: Complex form workflows, conditional fields
 - **File Upload**: Multiple document types support
+
+#### SmartRecruiters Integration (`pages/content/src/platforms/smartrecruiters.ts`)
+- **Selectors**: OneClick UI forms, custom field patterns
+- **Special Handling**: Dynamic form generation, conditional field display
+- **File Upload**: Multi-document support with format validation
+
+#### Greenhouse Integration (`pages/content/src/platforms/greenhouse.ts`)
+- **Selectors**: Job board forms, custom employer branding
+- **Special Handling**: Embedded forms, custom validation rules
+- **File Upload**: Resume and cover letter handling with preview
 
 ## Data Models
 
@@ -256,6 +284,65 @@ interface AIContentResponse {
 }
 ```
 
+### Intelligent Detection Models
+```typescript
+interface FieldPattern {
+  selector: string;
+  mapping: string;
+  confidence: number;
+  lastUsed: number;
+  successCount: number;
+  attributes: {
+    tagName: string;
+    className: string;
+    id: string;
+    type: string;
+    role: string;
+    ariaLabel: string;
+    placeholder: string;
+    name: string;
+  };
+  context: {
+    parentSelectors: string[];
+    siblingText: string[];
+    labelText: string;
+    nearbyText: string[];
+  };
+}
+
+interface ComponentDetectionResult {
+  type: 'react-select' | 'vue-select' | 'angular-material' | 'custom' | 'standard';
+  element: HTMLElement;
+  confidence: number;
+  interactionMethod: 'click' | 'type' | 'simulate' | 'api';
+  metadata: {
+    framework: string;
+    version?: string;
+    library?: string;
+    customProps?: Record<string, any>;
+  };
+}
+
+interface FormState {
+  id: string;
+  step: number;
+  totalSteps: number;
+  filledFields: Set<string>;
+  pendingFields: FormField[];
+  lastModified: Date;
+  platform: string;
+  url: string;
+}
+
+interface FileUploadStrategy {
+  name: string;
+  priority: number;
+  canHandle: (field: HTMLInputElement) => boolean;
+  upload: (field: HTMLInputElement, file: File) => Promise<boolean>;
+  fallback?: FileUploadStrategy;
+}
+```
+
 ## Error Handling
 
 ### Client-Side Error Handling
@@ -334,6 +421,229 @@ interface AIContentResponse {
 - **Metrics**: Success rate, user satisfaction, time savings
 - **Feedback**: Iterative improvement based on user experience
 
+## Intelligent Detection Architecture
+
+### Multi-Strategy Form Detection Engine
+
+#### Detection Strategy Hierarchy
+```typescript
+interface DetectionStrategy {
+  priority: number;
+  detect(container: HTMLElement): FormField[];
+  confidence: number;
+}
+
+class IntelligentDetector {
+  strategies: DetectionStrategy[] = [
+    new ARIABasedDetection(priority: 1),
+    new FrameworkSpecificDetection(priority: 2),
+    new SemanticPatternDetection(priority: 3),
+    new VisualLayoutDetection(priority: 4),
+    new FallbackDetection(priority: 5)
+  ];
+}
+```
+
+#### Framework-Specific Detection
+```typescript
+// React Component Detection
+class ReactDetection implements DetectionStrategy {
+  detect(container: HTMLElement): FormField[] {
+    // Detect React fiber nodes
+    const reactFiber = container._reactInternalFiber;
+    // Analyze component tree for form components
+    // Handle React Select, Material-UI, Ant Design, etc.
+  }
+}
+
+// Vue.js Component Detection  
+class VueDetection implements DetectionStrategy {
+  detect(container: HTMLElement): FormField[] {
+    // Detect Vue instance
+    const vueInstance = container.__vue__;
+    // Analyze component hierarchy
+    // Handle Vuetify, Element UI, Quasar, etc.
+  }
+}
+```
+
+### Advanced File Upload System
+
+#### Multi-Method File Attachment
+```typescript
+class SmartFileUploader {
+  async attachFile(field: HTMLInputElement, file: File): Promise<boolean> {
+    const methods = [
+      () => this.directFileAPIAttachment(field, file),
+      () => this.dragDropSimulation(field, file),
+      () => this.clipboardIntegration(field, file),
+      () => this.userGuidedUpload(field, file)
+    ];
+    
+    for (const method of methods) {
+      try {
+        if (await method()) return true;
+      } catch (error) {
+        console.log(`Method failed, trying next: ${error}`);
+      }
+    }
+    return false;
+  }
+  
+  private async directFileAPIAttachment(field: HTMLInputElement, file: File): Promise<boolean> {
+    // Create FileList with the file
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    field.files = dataTransfer.files;
+    
+    // Trigger change events
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    
+    return field.files.length > 0;
+  }
+}
+```
+
+### Universal Component Handler
+
+#### React Select Integration
+```typescript
+class ReactSelectHandler {
+  async fillReactSelect(container: HTMLElement, value: string): Promise<boolean> {
+    // Multiple React Select detection patterns
+    const selectors = [
+      '.react-select__control',
+      '[class*="select"][class*="control"]',
+      '[role="combobox"][class*="select"]'
+    ];
+    
+    for (const selector of selectors) {
+      const control = container.querySelector(selector);
+      if (control) {
+        return await this.interactWithReactSelect(control, value);
+      }
+    }
+    return false;
+  }
+  
+  private async interactWithReactSelect(control: HTMLElement, value: string): Promise<boolean> {
+    // Focus the control to open dropdown
+    control.click();
+    await this.waitForDropdown();
+    
+    // Type to filter options
+    const input = control.querySelector('input');
+    if (input) {
+      input.focus();
+      input.value = value;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      await this.waitForOptions();
+    }
+    
+    // Select matching option
+    const options = document.querySelectorAll('[role="option"]');
+    for (const option of options) {
+      if (this.matchesValue(option.textContent, value)) {
+        option.click();
+        return true;
+      }
+    }
+    
+    return false;
+  }
+}
+```
+
+### Adaptive Learning System
+
+#### Pattern Recognition and Learning
+```typescript
+class AdaptiveLearningEngine {
+  private patterns: Map<string, FieldPattern> = new Map();
+  
+  learnFromSuccessfulFill(field: HTMLElement, mapping: string): void {
+    const pattern = this.extractPattern(field);
+    const domain = window.location.hostname;
+    
+    this.patterns.set(`${domain}:${pattern.signature}`, {
+      selector: pattern.selector,
+      mapping: mapping,
+      confidence: pattern.confidence,
+      lastUsed: Date.now(),
+      successCount: (this.patterns.get(`${domain}:${pattern.signature}`)?.successCount || 0) + 1
+    });
+  }
+  
+  predictFieldMapping(field: HTMLElement): string | null {
+    const pattern = this.extractPattern(field);
+    const domain = window.location.hostname;
+    
+    // Try domain-specific pattern first
+    let learned = this.patterns.get(`${domain}:${pattern.signature}`);
+    if (learned && learned.confidence > 0.8) {
+      return learned.mapping;
+    }
+    
+    // Try cross-domain patterns
+    for (const [key, value] of this.patterns) {
+      if (key.includes(pattern.signature) && value.confidence > 0.9) {
+        return value.mapping;
+      }
+    }
+    
+    return null;
+  }
+}
+```
+
+### Dynamic Form Monitoring
+
+#### Multi-Step Form Handler
+```typescript
+class DynamicFormMonitor {
+  private observer: MutationObserver;
+  private formStates: Map<string, FormState> = new Map();
+  
+  startMonitoring(): void {
+    this.observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          this.handleFormChanges(mutation.addedNodes);
+        }
+      }
+    });
+    
+    this.observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style', 'hidden']
+    });
+  }
+  
+  private async handleFormChanges(addedNodes: NodeList): Promise<void> {
+    for (const node of addedNodes) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+        
+        // Check if new form fields appeared
+        const newFields = this.detectFormFields(element);
+        if (newFields.length > 0) {
+          // Continue autofill on new fields
+          await this.continueAutofill(newFields);
+        }
+        
+        // Check for form step changes
+        if (this.isFormStepChange(element)) {
+          await this.handleFormStepChange(element);
+        }
+      }
+    }
+  }
+}
+```
+
 ## Security Considerations
 
 ### Data Protection
@@ -355,3 +665,9 @@ interface AIContentResponse {
 - **Content Security Policy**: Strict CSP to prevent XSS attacks
 - **Permissions**: Minimal required permissions with clear justification
 - **Code Integrity**: Signed releases and integrity verification
+
+### Intelligent Detection Security
+- **Pattern Learning Privacy**: All learned patterns stored locally, no cloud transmission
+- **File Upload Security**: Validate file types and sizes before attachment attempts
+- **Cross-Frame Security**: Respect same-origin policy for iframe interactions
+- **Component Interaction Safety**: Validate component state before interaction attempts

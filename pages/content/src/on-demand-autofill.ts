@@ -12,6 +12,8 @@ import type {
   JobPlatform,
   FieldType 
 } from '@extension/shared';
+import { UniversalComponentHandler } from './components/universal-handler';
+import { ProfileDataValidator } from './utils/profile-data-validator';
 
 export interface AutofillTriggerMessage {
   type: 'autofill:trigger';
@@ -37,8 +39,12 @@ export class OnDemandAutofill {
   private profile: UserProfile | null = null;
   private detectedForms: DetectedForm[] = [];
   private formIndicators: HTMLElement[] = [];
+  private componentHandler: UniversalComponentHandler;
+  private profileValidator: ProfileDataValidator;
 
   constructor() {
+    this.componentHandler = new UniversalComponentHandler();
+    this.profileValidator = new ProfileDataValidator();
     this.setupMessageHandlers();
     this.loadProfile();
     this.initializeFormDetection();
@@ -639,6 +645,10 @@ export class OnDemandAutofill {
   private generateFieldSelector(element: HTMLElement, index: number): string {
     // Try ID first
     if (element.id) {
+      // Check if ID starts with a number (invalid for CSS selectors)
+      if (/^\d/.test(element.id)) {
+        return `[id="${element.id}"]`;
+      }
       return `#${element.id}`;
     }
 
@@ -763,6 +773,29 @@ export class OnDemandAutofill {
       if (this.matchesPattern(allText, ['cover.?letter', 'motivation.?letter'])) {
         return 'documents.coverLetters';
       }
+    }
+
+    // Demographic and diversity fields
+    if (this.matchesPattern(allText, ['gender.?identity', 'gender', 'how.?would.?you.?describe.?your.?gender'])) {
+      return 'preferences.defaultAnswers.gender_identity';
+    }
+    if (this.matchesPattern(allText, ['transgender', 'identify.?as.?transgender', 'trans'])) {
+      return 'preferences.defaultAnswers.transgender';
+    }
+    if (this.matchesPattern(allText, ['sexual.?orientation', 'orientation', 'sexuality'])) {
+      return 'preferences.defaultAnswers.sexual_orientation';
+    }
+    if (this.matchesPattern(allText, ['disability', 'identify.?as.?having.?a.?disability', 'disabled'])) {
+      return 'preferences.defaultAnswers.disability';
+    }
+    if (this.matchesPattern(allText, ['neurodivergent', 'neurodiverse', 'consider.?yourself.?to.?be.?neurodivergent'])) {
+      return 'preferences.defaultAnswers.neurodivergent';
+    }
+    if (this.matchesPattern(allText, ['ethnicity', 'ethnic', 'race', 'racial', 'how.?would.?your.?describe.?your.?ethnicity'])) {
+      return 'preferences.defaultAnswers.ethnicity';
+    }
+    if (this.matchesPattern(allText, ['veteran', 'military', 'armed.?forces', 'service.?member'])) {
+      return 'preferences.defaultAnswers.veteran_status';
     }
 
     return undefined;
@@ -1070,43 +1103,19 @@ export class OnDemandAutofill {
   }
 
   /**
-   * Get field value from profile
+   * Get field value from profile using enhanced validation and intelligent defaults
    */
   private getFieldValue(field: FormField, profile: UserProfile): string | null {
-    if (!field.mappedProfileField) {
-      // Try to get from default answers
-      const defaultAnswer = profile.preferences.defaultAnswers[field.label.toLowerCase()];
-      if (defaultAnswer) {
-        return defaultAnswer;
-      }
-      return null;
+    const result = this.profileValidator.getProfileValue(field, profile);
+    
+    console.log(`Getting value for field: ${field.label} -> ${field.mappedProfileField || 'unmapped'}`);
+    console.log(`Value source: ${result.source}, confidence: ${result.confidence}, value: ${result.value}`);
+    
+    if (result.alternatives && result.alternatives.length > 0) {
+      console.log(`Alternative values available: ${result.alternatives.join(', ')}`);
     }
 
-    const fieldPath = field.mappedProfileField.split('.');
-    let value: any = profile;
-
-    for (const part of fieldPath) {
-      if (value && typeof value === 'object' && part in value) {
-        value = value[part];
-      } else {
-        return null;
-      }
-    }
-
-    // Handle different value types
-    if (typeof value === 'string') {
-      return value;
-    } else if (typeof value === 'number') {
-      return value.toString();
-    } else if (typeof value === 'boolean') {
-      return value ? 'Yes' : 'No';
-    } else if (value instanceof Date) {
-      return value.toISOString().split('T')[0]; // YYYY-MM-DD format
-    } else if (Array.isArray(value)) {
-      return value.join(', ');
-    }
-
-    return null;
+    return result.value;
   }
 
   /**
@@ -1122,6 +1131,17 @@ export class OnDemandAutofill {
       if (element.tagName.toLowerCase() === 'select') {
         await this.handleSelectField(element as HTMLSelectElement, value);
         return true;
+      }
+
+      // Try intelligent component handler for complex components (React Select, etc.)
+      try {
+        const success = await this.componentHandler.fillComponent(element, value);
+        if (success) {
+          console.log('Field filled successfully using intelligent component handler');
+          return true;
+        }
+      } catch (error) {
+        console.warn('Intelligent component handler failed:', error);
       }
 
       if (element.tagName.toLowerCase() === 'textarea') {
@@ -1256,9 +1276,21 @@ export class OnDemandAutofill {
   }
 
   /**
-   * Handle select field with smart matching
+   * Handle select field with smart matching and intelligent component support
    */
   private async handleSelectField(element: HTMLSelectElement, value: string): Promise<void> {
+    // First try intelligent component handler in case this is a custom select
+    try {
+      const success = await this.componentHandler.fillComponent(element, value);
+      if (success) {
+        console.log('Select field filled using intelligent component handler');
+        return;
+      }
+    } catch (error) {
+      console.warn('Intelligent component handler failed for select, using fallback:', error);
+    }
+
+    // Fallback to standard select handling
     const options = Array.from(element.options);
     
     // Try exact match first
@@ -1454,28 +1486,29 @@ export class OnDemandAutofill {
       gap: 8px;
     `;
 
-    const mappedFields = form.fields.filter(f => f.mappedProfileField).length;== undefined) {
-          skippedFields.push({
-            fieldId: field.id,
-            selector: field.selector,
-            reason: 'no_mapping',
-            message: 'No profile data available for this field'
-          });
-          continue;
-        }
+    const mappedFields = form.fields.filter(f => f.mappedProfileField).length;
+    
+    indicator.innerHTML = `
+      <span style="font-size: 16px;">🚀</span>
+      <span style="font-weight: 500;">Autofill Ready</span>
+      <span style="font-size: 12px; opacity: 0.8;">${mappedFields}/${form.fields.length} fields</span>
+    `;
 
-        // Fill the field
-        await this.fillField(element, value, field.type);
-        
-        filledFields.push({
-          fieldId: field.id,
-          selector: field.selector,
-          value: value,
-          source: 'profile'
-        });
+    indicator.addEventListener('click', () => {
+      this.handleAutofillTrigger({
+        type: 'autofill:trigger',
+        source: 'popup',
+        data: { tabId: 0 }
+      });
+    });
 
-      } catch (error) {
-        errors.push({
+    return indicator;
+  }
+
+  /**
+   * Create field indicator
+   */
+  private createFieldIndicator(field: FormField): HTMLElement {
           fieldId: field.id,
           selector: field.selector,
           code: 'FILL_ERROR',
@@ -1499,23 +1532,16 @@ export class OnDemandAutofill {
   }
 
   /**
-   * Get value for field from profile
+   * Get value for field from profile using enhanced validation and intelligent defaults
    */
   private getFieldValue(field: FormField, profile: UserProfile): string | boolean | null {
-    if (!field.mappedProfileField) {
-      // Try to get value from default answers if no direct mapping
-      return this.getDefaultAnswerValue(field, profile);
-    }
-
-    const path = field.mappedProfileField.split('.');
-    let value: any = profile;
-
-    for (const key of path) {
-      if (value && typeof value === 'object' && key in value) {
-        value = value[key];
-      } else {
-        return null;
-      }
+    const result = this.profileValidator.getProfileValue(field, profile);
+    
+    console.log(`Getting value for field: ${field.label} -> ${field.mappedProfileField || 'unmapped'}`);
+    console.log(`Value source: ${result.source}, confidence: ${result.confidence}, value: ${result.value}`);
+    
+    if (result.alternatives && result.alternatives.length > 0) {
+      console.log(`Alternative values available: ${result.alternatives.join(', ')}`);
     }
 
     // Handle special cases
@@ -1523,26 +1549,14 @@ export class OnDemandAutofill {
       return field.mappedProfileField; // Return the mapping for file handling
     }
 
-    // Convert to appropriate type
+    // Convert to appropriate type for checkbox fields
     if (field.type === 'checkbox') {
-      return Boolean(value);
+      if (result.value === null) return null;
+      const stringValue = result.value.toLowerCase();
+      return stringValue === 'yes' || stringValue === 'true' || stringValue === '1';
     }
 
-    if (field.type === 'date' && value instanceof Date) {
-      return value.toISOString().split('T')[0];
-    }
-
-    // Handle work authorization mapping
-    if (field.mappedProfileField === 'preferences.jobPreferences.workAuthorization') {
-      return this.mapWorkAuthorizationValue(value, field);
-    }
-
-    // Handle boolean fields
-    if (field.mappedProfileField === 'preferences.jobPreferences.willingToRelocate') {
-      return value ? 'Yes' : 'No';
-    }
-
-    return value ? String(value) : null;
+    return result.value;
   }
 
   /**
@@ -1658,9 +1672,21 @@ export class OnDemandAutofill {
   }
 
   /**
-   * Handle select field with smart matching
+   * Handle select field with smart matching and intelligent component support
    */
   private async handleSelectField(element: HTMLSelectElement, value: string): Promise<void> {
+    // First try intelligent component handler in case this is a custom select
+    try {
+      const success = await this.componentHandler.fillComponent(element, value);
+      if (success) {
+        console.log('Select field filled using intelligent component handler');
+        return;
+      }
+    } catch (error) {
+      console.warn('Intelligent component handler failed for select, using fallback:', error);
+    }
+
+    // Fallback to standard select handling
     const options = Array.from(element.options);
     
     // Try exact match first
@@ -1688,6 +1714,7 @@ export class OnDemandAutofill {
 
     if (matchedOption) {
       element.value = matchedOption.value;
+      this.triggerEvents(element);
     } else {
       console.log(`No matching option found for value: ${value}`);
     }

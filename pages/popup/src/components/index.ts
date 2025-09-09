@@ -1,6 +1,9 @@
 export { AutofillControlPopup } from './AutofillControlPopup';
 export { PageStatusDisplay } from './PageStatusDisplay';
 export { AutofillTrigger } from './AutofillTrigger';
+export { ProfileForm } from './ProfileForm';
+export { ProfileView } from './ProfileView';
+export { SettingsView } from './SettingsView';
 export { QuickSettings } from './QuickSettings';
 export { ActivitySummary } from './ActivitySummary';
 export { ExtensionStatusFeedback } from './ExtensionStatusFeedback';

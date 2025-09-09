@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Button, cn } from '@extension/ui';
+import { useStorage } from '@extension/shared';
+import { exampleThemeStorage } from '@extension/storage';
 import type { UserProfile, ProfileValidationError } from '@extension/shared';
 
 interface DefaultAnswersFormProps {
@@ -13,6 +15,7 @@ export const DefaultAnswersForm: React.FC<DefaultAnswersFormProps> = ({
   errors,
   onChange,
 }) => {
+  const { isLight } = useStorage(exampleThemeStorage);
   const [newQuestion, setNewQuestion] = useState('');
   const [newAnswer, setNewAnswer] = useState('');
 
@@ -66,10 +69,16 @@ export const DefaultAnswersForm: React.FC<DefaultAnswersFormProps> = ({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+        <h3 className={cn(
+          'text-lg font-medium mb-4',
+          isLight ? 'text-gray-900' : 'text-gray-100'
+        )}>
           Default Answers & Preferences
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+        <p className={cn(
+          'text-sm mb-6',
+          isLight ? 'text-gray-600' : 'text-gray-400'
+        )}>
           Set up default answers for common application questions and configure your job preferences.
         </p>
       </div>

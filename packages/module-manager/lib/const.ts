@@ -7,7 +7,7 @@ export const DEFAULT_CHOICES = [
   { name: 'Content Script UI (Render Custom React Component on Web Page)', value: 'content-ui' },
   { name: 'Content Script Runtime (Inject JS on Specific Actions like Popup Click)', value: 'content-runtime' },
   { name: 'Background Script', value: 'background' },
-  { name: 'New Tab Override', value: 'new-tab' },
+
   { name: 'Popup (On Extension Icon Click)', value: 'popup' },
   { name: 'DevTools (Include DevTools Panel)', value: 'devtools' },
   { name: 'Side Panel', value: 'side-panel' },
@@ -21,7 +21,7 @@ export const HELP_EXAMPLES = [
   ['-d content-ui content-runtime', 'Delete content-ui and content-runtime'],
   ['--de content devtools', 'Delete everything exclude content and devtools'],
   ['-r options side-panel', 'Recover options and side-panel'],
-  ['--re popup new-tab', 'Recover everything exclude popup and new-tab'],
+  ['--re popup options', 'Recover everything exclude popup and options'],
 ] as const;
 
 export const CLI_OPTIONS = [
@@ -70,11 +70,7 @@ export const MODULE_CONFIG = {
       type: 'module',
     },
   },
-  'new-tab': {
-    chrome_url_overrides: {
-      newtab: 'new-tab/index.html',
-    },
-  },
+
   popup: {
     action: {
       default_popup: 'popup/index.html',

@@ -9,7 +9,7 @@ const Popup = () => {
   const { isLight } = useStorage(exampleThemeStorage);
 
   return (
-    <div className={cn('App', isLight ? 'bg-white' : 'bg-gray-900')}>
+    <div className="App">
       <AutofillControlPopup />
     </div>
   );

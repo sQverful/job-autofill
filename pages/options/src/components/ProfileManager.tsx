@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button, LoadingSpinner } from '@extension/ui';
-import { validateUserProfile } from '@extension/shared';
+import { Button, LoadingSpinner, cn } from '@extension/ui';
+import { validateUserProfile, useStorage } from '@extension/shared';
+import { exampleThemeStorage } from '@extension/storage';
 import type { UserProfile, ProfileValidationResult } from '@extension/shared';
 import { PersonalInfoForm } from './PersonalInfoForm';
 import { ProfessionalInfoForm } from './ProfessionalInfoForm';
@@ -71,6 +72,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
   onSave,
   onCancel,
 }) => {
+  const { isLight } = useStorage(exampleThemeStorage);
   const [profile, setProfile] = useState<UserProfile>(createDefaultProfile());
   const [validation, setValidation] = useState<ProfileValidationResult>({ isValid: true, errors: [], warnings: [] });
   const [activeSection, setActiveSection] = useState<'personal' | 'professional' | 'documents' | 'answers' | 'testdata'>('personal');
@@ -298,7 +300,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
       <div className="max-w-4xl mx-auto p-6 flex items-center justify-center min-h-96">
         <div className="flex items-center space-x-3">
           <LoadingSpinner />
-          <span className="text-gray-600 dark:text-gray-400">Loading profile...</span>
+          <span className={cn(isLight ? 'text-gray-600' : 'text-gray-400')}>Loading profile...</span>
         </div>
       </div>
     );
@@ -307,10 +309,13 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+        <h2 className={cn(
+          'text-2xl font-bold mb-2',
+          isLight ? 'text-gray-900' : 'text-gray-100'
+        )}>
           Profile Management
         </h2>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className={cn(isLight ? 'text-gray-600' : 'text-gray-400')}>
           Complete your profile to enable automatic job application filling. All information is stored securely and encrypted.
         </p>
       </div>
@@ -319,11 +324,22 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
       {(validation.errors.length > 0 || validation.warnings.length > 0) && (
         <div className="mb-6 space-y-2">
           {validation.errors.length > 0 && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
-              <h3 className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">
+            <div className={cn(
+              'border rounded-md p-4',
+              isLight 
+                ? 'bg-red-50 border-red-200' 
+                : 'bg-red-900/20 border-red-800'
+            )}>
+              <h3 className={cn(
+                'text-sm font-medium mb-2',
+                isLight ? 'text-red-800' : 'text-red-200'
+              )}>
                 Please fix the following errors:
               </h3>
-              <ul className="text-sm text-red-700 dark:text-red-300 space-y-1">
+              <ul className={cn(
+                'text-sm space-y-1',
+                isLight ? 'text-red-700' : 'text-red-300'
+              )}>
                 {validation.errors.map((error, index) => (
                   <li key={index}>• {error.message}</li>
                 ))}
@@ -332,11 +348,22 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
           )}
           
           {validation.warnings.length > 0 && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-4">
-              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">
+            <div className={cn(
+              'border rounded-md p-4',
+              isLight 
+                ? 'bg-yellow-50 border-yellow-200' 
+                : 'bg-yellow-900/20 border-yellow-800'
+            )}>
+              <h3 className={cn(
+                'text-sm font-medium mb-2',
+                isLight ? 'text-yellow-800' : 'text-yellow-200'
+              )}>
                 Recommendations:
               </h3>
-              <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+              <ul className={cn(
+                'text-sm space-y-1',
+                isLight ? 'text-yellow-700' : 'text-yellow-300'
+              )}>
                 {validation.warnings.map((warning, index) => (
                   <li key={index}>• {warning.message}</li>
                 ))}
@@ -347,17 +374,26 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
       )}
 
       {/* Section Navigation */}
-      <div className="border-b border-gray-200 dark:border-gray-700 mb-8">
+      <div className={cn(
+        'border-b mb-8',
+        isLight ? 'border-gray-200' : 'border-gray-700'
+      )}>
         <nav className="-mb-px flex space-x-8">
           {sections.map((section) => (
             <button
               key={section.id}
               onClick={() => setActiveSection(section.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={cn(
+                'py-2 px-1 border-b-2 font-medium text-sm transition-colors',
                 activeSection === section.id
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-              }`}
+                  ? 'border-blue-500 text-blue-600'
+                  : cn(
+                      'border-transparent',
+                      isLight 
+                        ? 'text-gray-500 hover:text-gray-700' 
+                        : 'text-gray-400 hover:text-gray-300'
+                    )
+              )}
             >
               {section.label}
             </button>
@@ -410,15 +446,24 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-gray-700">
+      <div className={cn(
+        'flex justify-between items-center pt-6 border-t',
+        isLight ? 'border-gray-200' : 'border-gray-700'
+      )}>
         <div className="flex items-center space-x-4">
           {hasUnsavedChanges && (
-            <span className="text-sm text-yellow-600 dark:text-yellow-400">
+            <span className={cn(
+              'text-sm',
+              isLight ? 'text-yellow-600' : 'text-yellow-400'
+            )}>
               You have unsaved changes
             </span>
           )}
           
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <span className={cn(
+            'text-sm',
+            isLight ? 'text-gray-500' : 'text-gray-400'
+          )}>
             Profile completion: {Math.round(((validation.errors.length === 0 ? 1 : 0) + 
               (validation.warnings.length < 3 ? 1 : 0)) * 50)}%
           </span>
@@ -446,9 +491,14 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
       {/* Progress Indicator */}
       {isSaving && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-3">
+          <div className={cn(
+            'rounded-lg p-6 flex items-center space-x-3',
+            isLight ? 'bg-white' : 'bg-gray-800'
+          )}>
             <LoadingSpinner />
-            <span className="text-gray-900 dark:text-gray-100">Saving your profile...</span>
+            <span className={cn(isLight ? 'text-gray-900' : 'text-gray-100')}>
+              Saving your profile...
+            </span>
           </div>
         </div>
       )}
