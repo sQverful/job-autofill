@@ -36,7 +36,7 @@ export const AutofillControlPopup: React.FC = () => {
     lastResult: null,
     activeTab: 'autofill',
     showEditForm: false,
-    saveStatus: 'idle'
+    saveStatus: 'idle',
   });
   const [loading, setLoading] = useState(true);
 
@@ -75,21 +75,20 @@ export const AutofillControlPopup: React.FC = () => {
         profileComplete,
         profileId: profile?.id,
         firstName: profile?.personalInfo?.firstName,
-        email: profile?.personalInfo?.email
+        email: profile?.personalInfo?.email,
       });
 
       setState(prev => ({
         ...prev,
         currentTab: tab,
         profile,
-        profileComplete
+        profileComplete,
       }));
-
     } catch (error) {
       console.error('Failed to initialize popup:', error);
       setState(prev => ({
         ...prev,
-        error: 'Failed to initialize extension'
+        error: 'Failed to initialize extension',
       }));
     } finally {
       setLoading(false);
@@ -103,7 +102,7 @@ export const AutofillControlPopup: React.FC = () => {
         return;
       }
 
-      chrome.tabs.sendMessage(state.currentTab.id, message, (response) => {
+      chrome.tabs.sendMessage(state.currentTab.id, message, response => {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else {
@@ -122,7 +121,7 @@ export const AutofillControlPopup: React.FC = () => {
       // Send message to content script to trigger autofill
       const result = await sendMessageToTab({
         type: 'autofill:trigger',
-        data: { tabId: state.currentTab.id }
+        data: { tabId: state.currentTab.id },
       });
 
       if (result.success) {
@@ -134,8 +133,8 @@ export const AutofillControlPopup: React.FC = () => {
             filledCount: result.filledCount,
             totalFields: result.totalFields,
             platform: result.platform || 'unknown',
-            duration: result.duration
-          }
+            duration: result.duration,
+          },
         }));
       } else {
         throw new Error(result.error || 'Autofill failed');
@@ -144,7 +143,7 @@ export const AutofillControlPopup: React.FC = () => {
       setState(prev => ({
         ...prev,
         autofillStatus: 'error',
-        error: error instanceof Error ? error.message : 'Failed to fill form'
+        error: error instanceof Error ? error.message : 'Failed to fill form',
       }));
     }
   };
@@ -163,7 +162,7 @@ export const AutofillControlPopup: React.FC = () => {
         profile,
         showEditForm: false,
         saveStatus: 'success',
-        profileComplete
+        profileComplete,
       }));
       setTimeout(() => setState(prev => ({ ...prev, saveStatus: 'idle' })), 2000);
     } catch (error) {
@@ -215,43 +214,34 @@ export const AutofillControlPopup: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center w-[480px] h-[700px]">
+      <div className="flex h-[700px] w-[480px] items-center justify-center">
         <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className={cn(
-      'w-[480px] h-[700px] flex flex-col',
-      isLight ? 'bg-white text-gray-900' : 'bg-gray-900 text-gray-100'
-    )}>
-      {/* Header */}
-      <div className={cn(
-        'flex-shrink-0 px-3 py-2',
-        isLight ? 'bg-blue-600 text-white' : 'bg-blue-700 text-white'
+    <div
+      className={cn(
+        'flex h-[700px] w-[480px] flex-col',
+        isLight ? 'bg-white text-gray-900' : 'bg-gray-900 text-gray-100',
       )}>
+      {/* Header */}
+      <div className={cn('flex-shrink-0 px-3 py-2', isLight ? 'bg-blue-600 text-white' : 'bg-blue-700 text-white')}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <img
-              src={chrome.runtime.getURL('icon-34.png')}
-              alt="Job Autofill"
-              className="w-5 h-5"
-            />
+            <img src={chrome.runtime.getURL('icon-34.png')} alt="Apply Ninja" className="h-5 w-5" />
             <div>
-              <h1 className="text-base font-semibold">Job Autofill</h1>
+              <h1 className="text-base font-semibold">Apply Ninja</h1>
               <p className="text-xs opacity-90">Manage your application data</p>
             </div>
           </div>
           <div className="ml-2">
             <button
               onClick={exampleThemeStorage.toggle}
-              className="p-1.5 rounded hover:bg-white/10 transition-colors"
-              title={`Switch to ${isLight ? 'dark' : 'light'} mode`}
-            >
-              <span className="text-sm">
-                {isLight ? '🌙' : '☀️'}
-              </span>
+              className="rounded p-1.5 transition-colors hover:bg-white/10"
+              title={`Switch to ${isLight ? 'dark' : 'light'} mode`}>
+              <span className="text-sm">{isLight ? '🌙' : '☀️'}</span>
             </button>
           </div>
         </div>
@@ -262,13 +252,11 @@ export const AutofillControlPopup: React.FC = () => {
         <div
           className="flex-shrink-0 bg-blue-100 p-2 text-center text-sm text-blue-800"
           role="status"
-          aria-live="polite"
-        >
+          aria-live="polite">
           <div className="flex items-center justify-center">
             <div
-              className="inline-block w-4 h-4 mr-2 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"
-              aria-hidden="true"
-            ></div>
+              className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"
+              aria-hidden="true"></div>
             Saving profile...
           </div>
         </div>
@@ -277,10 +265,11 @@ export const AutofillControlPopup: React.FC = () => {
         <div
           className="flex-shrink-0 bg-green-100 p-2 text-center text-sm text-green-800"
           role="status"
-          aria-live="polite"
-        >
+          aria-live="polite">
           <div className="flex items-center justify-center">
-            <span className="mr-2" aria-hidden="true">✓</span>
+            <span className="mr-2" aria-hidden="true">
+              ✓
+            </span>
             Profile saved successfully!
           </div>
         </div>
@@ -289,20 +278,21 @@ export const AutofillControlPopup: React.FC = () => {
         <div
           className="flex-shrink-0 bg-red-100 p-2 text-center text-sm text-red-800"
           role="alert"
-          aria-live="assertive"
-        >
+          aria-live="assertive">
           <div className="flex items-center justify-center">
-            <span className="mr-2" aria-hidden="true">✗</span>
+            <span className="mr-2" aria-hidden="true">
+              ✗
+            </span>
             Failed to save profile. Please try again.
           </div>
         </div>
       )}
 
       {/* Navigation */}
-      <div className={cn(
-        'flex flex-shrink-0 border-b',
-        isLight ? 'border-gray-200' : 'border-gray-700'
-      )} role="tablist" aria-label="Extension sections">
+      <div
+        className={cn('flex flex-shrink-0 border-b', isLight ? 'border-gray-200' : 'border-gray-700')}
+        role="tablist"
+        aria-label="Extension sections">
         <button
           onClick={() => setState(prev => ({ ...prev, activeTab: 'autofill' }))}
           role="tab"
@@ -310,10 +300,12 @@ export const AutofillControlPopup: React.FC = () => {
           aria-controls="autofill-panel"
           id="autofill-tab"
           className={cn(
-            'flex-1 px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset',
+            'flex-1 px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500',
             state.activeTab === 'autofill'
               ? 'border-b-2 border-blue-600 text-blue-600'
-              : (isLight ? 'text-gray-600 hover:text-gray-800' : 'text-gray-400 hover:text-gray-200')
+              : isLight
+                ? 'text-gray-600 hover:text-gray-800'
+                : 'text-gray-400 hover:text-gray-200',
           )}>
           Autofill
         </button>
@@ -324,10 +316,12 @@ export const AutofillControlPopup: React.FC = () => {
           aria-controls="profile-panel"
           id="profile-tab"
           className={cn(
-            'flex-1 px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset',
+            'flex-1 px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500',
             state.activeTab === 'profile'
               ? 'border-b-2 border-blue-600 text-blue-600'
-              : (isLight ? 'text-gray-600 hover:text-gray-800' : 'text-gray-400 hover:text-gray-200')
+              : isLight
+                ? 'text-gray-600 hover:text-gray-800'
+                : 'text-gray-400 hover:text-gray-200',
           )}>
           Profile
         </button>
@@ -338,62 +332,51 @@ export const AutofillControlPopup: React.FC = () => {
           aria-controls="settings-panel"
           id="settings-tab"
           className={cn(
-            'flex-1 px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset',
+            'flex-1 px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500',
             state.activeTab === 'settings'
               ? 'border-b-2 border-blue-600 text-blue-600'
-              : (isLight ? 'text-gray-600 hover:text-gray-800' : 'text-gray-400 hover:text-gray-200')
+              : isLight
+                ? 'text-gray-600 hover:text-gray-800'
+                : 'text-gray-400 hover:text-gray-200',
           )}>
           Settings
         </button>
       </div>
 
       {/* Content - Scrollable Area */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="p-3 sm:p-4">
           <div
             role="tabpanel"
             id="autofill-panel"
             aria-labelledby="autofill-tab"
-            hidden={state.activeTab !== 'autofill'}
-          >
+            hidden={state.activeTab !== 'autofill'}>
             {state.activeTab === 'autofill' && renderAutofillTab()}
           </div>
-          <div
-            role="tabpanel"
-            id="profile-panel"
-            aria-labelledby="profile-tab"
-            hidden={state.activeTab !== 'profile'}
-          >
+          <div role="tabpanel" id="profile-panel" aria-labelledby="profile-tab" hidden={state.activeTab !== 'profile'}>
             {state.activeTab === 'profile' && renderProfileTab()}
           </div>
           <div
             role="tabpanel"
             id="settings-panel"
             aria-labelledby="settings-tab"
-            hidden={state.activeTab !== 'settings'}
-          >
+            hidden={state.activeTab !== 'settings'}>
             {state.activeTab === 'settings' && renderSettingsTab()}
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className={cn(
-        'flex-shrink-0 border-t px-3 py-1.5',
-        isLight ? 'bg-gray-50 border-gray-200' : 'bg-gray-800 border-gray-700'
-      )}>
-        <div className={cn(
-          'flex items-center justify-between text-xs',
-          isLight ? 'text-gray-600' : 'text-gray-400'
+      <div
+        className={cn(
+          'flex-shrink-0 border-t px-3 py-1.5',
+          isLight ? 'border-gray-200 bg-gray-50' : 'border-gray-700 bg-gray-800',
         )}>
+        <div className={cn('flex items-center justify-between text-xs', isLight ? 'text-gray-600' : 'text-gray-400')}>
           <span>v0.5.0</span>
           <button
             onClick={handleOpenOptions}
-            className={cn(
-              'hover:underline transition-colors',
-              isLight ? 'text-blue-600' : 'text-blue-400'
-            )}
-          >
+            className={cn('transition-colors hover:underline', isLight ? 'text-blue-600' : 'text-blue-400')}>
             Advanced Settings
           </button>
         </div>
@@ -403,28 +386,26 @@ export const AutofillControlPopup: React.FC = () => {
 
   function renderAutofillTab() {
     return (
-      <div className="space-y-4">{/* Profile Status */}
+      <div className="space-y-4">
+        {/* Profile Status */}
         {!state.profileComplete && (
-          <div className={cn(
-            'p-3 rounded-lg border',
-            isLight ? 'bg-yellow-50 border-yellow-200 text-yellow-800' : 'bg-yellow-900/20 border-yellow-700 text-yellow-300'
-          )}>
+          <div
+            className={cn(
+              'rounded-lg border p-3',
+              isLight
+                ? 'border-yellow-200 bg-yellow-50 text-yellow-800'
+                : 'border-yellow-700 bg-yellow-900/20 text-yellow-300',
+            )}>
             <p className="text-sm">Please complete your profile to use autofill features.</p>
-            <div className="flex space-x-2 mt-2">
+            <div className="mt-2 flex space-x-2">
               <Button
                 variant="primary"
                 size="sm"
                 onClick={() => setState(prev => ({ ...prev, activeTab: 'profile' }))}
-                className="flex-1"
-              >
+                className="flex-1">
                 Complete Profile
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={initializePopup}
-                className="px-3"
-              >
+              <Button variant="outline" size="sm" onClick={initializePopup} className="px-3">
                 ↻
               </Button>
             </div>
@@ -432,23 +413,17 @@ export const AutofillControlPopup: React.FC = () => {
         )}
 
         {/* Current Page Info */}
-        <div className={cn(
-          'p-3 rounded-lg border',
-          isLight ? 'bg-gray-50 border-gray-200' : 'bg-gray-800 border-gray-700'
-        )}>
-          <div className="flex items-center space-x-2 mb-2">
-            <div className={cn(
-              'w-2 h-2 rounded-full',
-              state.currentTab ? 'bg-green-500' : 'bg-red-500'
-            )} />
-            <span className="text-sm font-medium">
-              {state.currentTab ? 'Page Active' : 'No Active Page'}
-            </span>
+        <div
+          className={cn(
+            'rounded-lg border p-3',
+            isLight ? 'border-gray-200 bg-gray-50' : 'border-gray-700 bg-gray-800',
+          )}>
+          <div className="mb-2 flex items-center space-x-2">
+            <div className={cn('h-2 w-2 rounded-full', state.currentTab ? 'bg-green-500' : 'bg-red-500')} />
+            <span className="text-sm font-medium">{state.currentTab ? 'Page Active' : 'No Active Page'}</span>
           </div>
           {state.currentTab && (
-            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-              {state.currentTab.title}
-            </p>
+            <p className="truncate text-xs text-gray-600 dark:text-gray-400">{state.currentTab.title}</p>
           )}
         </div>
 
@@ -458,33 +433,40 @@ export const AutofillControlPopup: React.FC = () => {
             variant="primary"
             size="lg"
             onClick={handleFillOutForm}
-            disabled={!state.profileComplete || state.autofillStatus === 'analyzing' || state.autofillStatus === 'filling'}
-            className="w-full transition-all duration-200 hover:scale-105 active:scale-95"
-          >
+            disabled={
+              !state.profileComplete || state.autofillStatus === 'analyzing' || state.autofillStatus === 'filling'
+            }
+            className="w-full transition-all duration-200 hover:scale-105 active:scale-95">
             {(state.autofillStatus === 'analyzing' || state.autofillStatus === 'filling') && (
-              <div className="inline-block w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <div className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
             )}
             Fill Out Form
           </Button>
 
-          <p className={cn(
-            'text-xs text-center',
-            state.autofillStatus === 'error' ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'
-          )}>
+          <p
+            className={cn(
+              'text-center text-xs',
+              state.autofillStatus === 'error' ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400',
+            )}>
             {getStatusMessage()}
           </p>
         </div>
 
         {/* Last Result */}
         {state.lastResult && state.autofillStatus === 'complete' && (
-          <div className={cn(
-            'p-3 rounded-lg border',
-            isLight ? 'bg-green-50 border-green-200 text-green-800' : 'bg-green-900/20 border-green-700 text-green-300'
-          )}>
+          <div
+            className={cn(
+              'rounded-lg border p-3',
+              isLight
+                ? 'border-green-200 bg-green-50 text-green-800'
+                : 'border-green-700 bg-green-900/20 text-green-300',
+            )}>
             <div className="text-sm">
               <div className="font-medium">Autofill Complete</div>
               <div className="mt-1 space-y-1">
-                <div>Fields filled: {state.lastResult.filledCount}/{state.lastResult.totalFields}</div>
+                <div>
+                  Fields filled: {state.lastResult.filledCount}/{state.lastResult.totalFields}
+                </div>
                 <div>Platform: {state.lastResult.platform}</div>
                 <div>Duration: {state.lastResult.duration}ms</div>
               </div>
@@ -499,9 +481,9 @@ export const AutofillControlPopup: React.FC = () => {
     return (
       <div>
         {state.profile &&
-          state.profile.personalInfo &&
-          (state.profile.personalInfo.firstName || state.profile.personalInfo.email) &&
-          !state.showEditForm ? (
+        state.profile.personalInfo &&
+        (state.profile.personalInfo.firstName || state.profile.personalInfo.email) &&
+        !state.showEditForm ? (
           <ProfileView
             profile={state.profile}
             onEdit={() => setState(prev => ({ ...prev, showEditForm: true }))}
@@ -519,10 +501,6 @@ export const AutofillControlPopup: React.FC = () => {
   }
 
   function renderSettingsTab() {
-    return (
-      <SettingsView onImport={handleProfileImport} />
-    );
+    return <SettingsView onImport={handleProfileImport} />;
   }
-
-
 };

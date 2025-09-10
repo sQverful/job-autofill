@@ -1,11 +1,11 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "Chrome extension boilerplate developed with Vite, React and Typescript"
+    "message": "ApplyNinja saves your profile once and auto-fills job applications everywhere. Faster forms, more time for landing the job"
   },
   "extensionName": {
     "description": "Extension name",
-    "message": "Chrome extension boilerplate"
+    "message": "Apply Ninja"
   },
   "toggleTheme": {
     "message": "Toggle theme"
