@@ -7,3 +7,5 @@ export { SettingsView } from './SettingsView';
 export { QuickSettings } from './QuickSettings';
 export { ActivitySummary } from './ActivitySummary';
 export { ExtensionStatusFeedback } from './ExtensionStatusFeedback';
+export { PrivacySecurityIndicator } from './PrivacySecurityIndicator';
+export { SecurityWarnings } from './SecurityWarnings';

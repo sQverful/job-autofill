@@ -4,14 +4,7 @@
  */
 
 import { profileStorage } from '@extension/storage';
-import type {
-  UserProfile,
-  DetectedForm,
-  FormField,
-  AutofillResult,
-  JobPlatform,
-  FieldType
-} from '@extension/shared';
+import type { UserProfile, DetectedForm, FormField, AutofillResult, JobPlatform, FieldType } from '@extension/shared';
 import { UniversalComponentHandler } from './components/universal-handler';
 import { safeQuerySelector, safeQuerySelectorAll } from './utils/safe-selector';
 import { ProfileDataValidator } from './utils/profile-data-validator';
@@ -71,7 +64,7 @@ export class EnhancedAutofill {
             console.error('Autofill trigger failed:', error);
             sendResponse({
               success: false,
-              error: error.message || 'Unknown error occurred'
+              error: error.message || 'Unknown error occurred',
             });
           });
         return true;
@@ -84,7 +77,7 @@ export class EnhancedAutofill {
             console.error('Form analysis failed:', error);
             sendResponse({
               success: false,
-              error: error.message || 'Analysis failed'
+              error: error.message || 'Analysis failed',
             });
           });
         return true;
@@ -153,14 +146,13 @@ export class EnhancedAutofill {
           platform: analysis.platform,
           duration: result.duration,
           skippedCount: result.skippedFields.length,
-          errorCount: result.errors.length
-        }
+          errorCount: result.errors.length,
+        },
       });
 
       this.showAutofillFeedback(result, analysis.platform);
 
       return result;
-
     } finally {
       this.isProcessing = false;
     }
@@ -180,16 +172,15 @@ export class EnhancedAutofill {
         success: true,
         platform,
         forms,
-        confidence
+        confidence,
       };
-
     } catch (error) {
       return {
         success: false,
         platform: 'custom',
         forms: [],
         confidence: 0,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -238,7 +229,7 @@ export class EnhancedAutofill {
         '[role="form"]',
         'main',
         '.content',
-        '#main-content'
+        '#main-content',
       ];
 
       for (const selector of containerSelectors) {
@@ -288,9 +279,8 @@ export class EnhancedAutofill {
         detectedAt: new Date(),
         isMultiStep: this.isMultiStepForm(formElement),
         currentStep: this.getCurrentStep(formElement),
-        totalSteps: this.getTotalSteps(formElement)
+        totalSteps: this.getTotalSteps(formElement),
       };
-
     } catch (error) {
       console.error('Error analyzing form:', error);
       return null;
@@ -321,9 +311,8 @@ export class EnhancedAutofill {
         detectedAt: new Date(),
         isMultiStep: this.isMultiStepContainer(container),
         currentStep: this.getCurrentStepFromContainer(container),
-        totalSteps: this.getTotalStepsFromContainer(container)
+        totalSteps: this.getTotalStepsFromContainer(container),
       };
-
     } catch (error) {
       console.error('Error analyzing form container:', error);
       return null;
@@ -353,9 +342,8 @@ export class EnhancedAutofill {
         detectedAt: new Date(),
         isMultiStep: this.isMultiStepPage(),
         currentStep: undefined,
-        totalSteps: undefined
+        totalSteps: undefined,
       };
-
     } catch (error) {
       console.error('Error analyzing page as form:', error);
       return null;
@@ -384,7 +372,7 @@ export class EnhancedAutofill {
       '[class*="input"]:not([type="hidden"])',
       '[class*="field"]:not([type="hidden"])',
       '[data-testid*="input"]',
-      '[data-testid*="field"]'
+      '[data-testid*="field"]',
     ];
 
     const inputs = safeQuerySelectorAll(selectors.join(', '), container);
@@ -403,7 +391,10 @@ export class EnhancedAutofill {
     }
 
     // Also look for React Select containers specifically
-    const reactSelectContainers = safeQuerySelectorAll('[class*="select__control"], [class*="react-select"], .select-shell', container);
+    const reactSelectContainers = safeQuerySelectorAll(
+      '[class*="select__control"], [class*="react-select"], .select-shell',
+      container,
+    );
     for (let i = 0; i < reactSelectContainers.length; i++) {
       const selectContainer = reactSelectContainers[i] as HTMLElement;
       const field = this.analyzeReactSelectField(selectContainer, fields.length + i);
@@ -471,9 +462,8 @@ export class EnhancedAutofill {
         placeholder: element.getAttribute('placeholder') || undefined,
         options: this.getFieldOptions(element),
         mappedProfileField: this.mapToProfileField(element, label, type),
-        validationRules: this.extractValidationRules(element)
+        validationRules: this.extractValidationRules(element),
       };
-
     } catch (error) {
       console.error('Error analyzing field:', error);
       return null;
@@ -486,7 +476,10 @@ export class EnhancedAutofill {
   private analyzeReactSelectField(container: HTMLElement, index: number): FormField | null {
     try {
       // Find the actual input element within the React Select
-      const input = safeQuerySelector('input[role="combobox"], .select__input input, input[class*="input"]', container) as HTMLInputElement;
+      const input = safeQuerySelector(
+        'input[role="combobox"], .select__input input, input[class*="input"]',
+        container,
+      ) as HTMLInputElement;
       if (!input) {
         return null;
       }
@@ -508,9 +501,8 @@ export class EnhancedAutofill {
         placeholder: this.getReactSelectPlaceholder(container),
         options: this.getReactSelectOptions(container),
         mappedProfileField: this.mapToProfileField(container, label, 'select'),
-        validationRules: this.extractValidationRules(input)
+        validationRules: this.extractValidationRules(input),
       };
-
     } catch (error) {
       console.error('Error analyzing React Select field:', error);
       return null;
@@ -540,17 +532,15 @@ export class EnhancedAutofill {
     }
 
     // Look for label-like elements near the container
-    const labelSelectors = [
-      '.select__label',
-      '.label',
-      '[class*="label"]',
-      'label'
-    ];
+    const labelSelectors = ['.select__label', '.label', '[class*="label"]', 'label'];
 
     for (const selector of labelSelectors) {
-      const labelElement = safeQuerySelector(selector, container) ||
+      const labelElement =
+        safeQuerySelector(selector, container) ||
         (container.parentElement ? safeQuerySelector(selector, container.parentElement) : null) ||
-        (container.closest('.form-group, .field, .input-group') ? safeQuerySelector(selector, container.closest('.form-group, .field, .input-group')!) : null);
+        (container.closest('.form-group, .field, .input-group')
+          ? safeQuerySelector(selector, container.closest('.form-group, .field, .input-group')!)
+          : null);
 
       if (labelElement && labelElement.textContent) {
         return this.cleanLabelText(labelElement.textContent);
@@ -629,16 +619,16 @@ export class EnhancedAutofill {
       const type = inputElement.type.toLowerCase();
 
       const typeMap: Record<string, FieldType> = {
-        'text': 'text',
-        'email': 'email',
-        'tel': 'phone',
-        'phone': 'phone',
-        'checkbox': 'checkbox',
-        'radio': 'radio',
-        'file': 'file',
-        'date': 'date',
-        'number': 'number',
-        'url': 'url'
+        text: 'text',
+        email: 'email',
+        tel: 'phone',
+        phone: 'phone',
+        checkbox: 'checkbox',
+        radio: 'radio',
+        file: 'file',
+        date: 'date',
+        number: 'number',
+        url: 'url',
       };
 
       return typeMap[type] || 'text';
@@ -749,19 +739,46 @@ export class EnhancedAutofill {
     const allText = `${labelLower} ${name} ${id} ${placeholder} ${ariaLabel}`.toLowerCase();
 
     // Enhanced personal info mappings
-    if (this.matchesPattern(allText, ['first.?name', 'given.?name', 'fname', 'firstname', 'name_first', 'applicant.?first'])) {
+    if (
+      this.matchesPattern(allText, [
+        'first.?name',
+        'given.?name',
+        'fname',
+        'firstname',
+        'name_first',
+        'applicant.?first',
+      ])
+    ) {
       return 'personalInfo.firstName';
     }
-    if (this.matchesPattern(allText, ['last.?name', 'family.?name', 'surname', 'lastname', 'lname', 'name_last', 'applicant.?last'])) {
+    if (
+      this.matchesPattern(allText, [
+        'last.?name',
+        'family.?name',
+        'surname',
+        'lastname',
+        'lname',
+        'name_last',
+        'applicant.?last',
+      ])
+    ) {
       return 'personalInfo.lastName';
     }
-    if (this.matchesPattern(allText, ['full.?name', '^name$', 'applicant.?name', 'candidate.?name', 'your.?name']) && !allText.includes('first') && !allText.includes('last')) {
+    if (
+      this.matchesPattern(allText, ['full.?name', '^name$', 'applicant.?name', 'candidate.?name', 'your.?name']) &&
+      !allText.includes('first') &&
+      !allText.includes('last')
+    ) {
       return 'personalInfo.firstName'; // User can enter full name in first name field
     }
-    if (this.matchesPattern(allText, ['email', 'e-?mail', 'mail', 'contact.?email', 'email.?address', 'applicant.?email'])) {
+    if (
+      this.matchesPattern(allText, ['email', 'e-?mail', 'mail', 'contact.?email', 'email.?address', 'applicant.?email'])
+    ) {
       return 'personalInfo.email';
     }
-    if (this.matchesPattern(allText, ['phone', 'mobile', 'telephone', 'tel', 'contact.?number', 'cell', 'phone.?number'])) {
+    if (
+      this.matchesPattern(allText, ['phone', 'mobile', 'telephone', 'tel', 'contact.?number', 'cell', 'phone.?number'])
+    ) {
       return 'personalInfo.phone';
     }
 
@@ -794,13 +811,31 @@ export class EnhancedAutofill {
     }
 
     // Job preferences and work authorization
-    if (this.matchesPattern(allText, ['salary', 'compensation', 'expected.?salary', 'desired.?salary', 'salary.?expectation', 'pay.?rate'])) {
+    if (
+      this.matchesPattern(allText, [
+        'salary',
+        'compensation',
+        'expected.?salary',
+        'desired.?salary',
+        'salary.?expectation',
+        'pay.?rate',
+      ])
+    ) {
       return 'preferences.jobPreferences.desiredSalaryMin';
     }
     if (this.matchesPattern(allText, ['start.?date', 'available', 'availability', 'join.?date', 'available.?start'])) {
       return 'preferences.jobPreferences.availableStartDate';
     }
-    if (this.matchesPattern(allText, ['work.?authorization', 'visa', 'sponsorship', 'eligible.?to.?work', 'authorized.?to.?work', 'employment.?authorization'])) {
+    if (
+      this.matchesPattern(allText, [
+        'work.?authorization',
+        'visa',
+        'sponsorship',
+        'eligible.?to.?work',
+        'authorized.?to.?work',
+        'employment.?authorization',
+      ])
+    ) {
       return 'preferences.jobPreferences.workAuthorization';
     }
     if (this.matchesPattern(allText, ['relocat', 'willing.?to.?move', 'move.?for.?job', 'relocation'])) {
@@ -825,7 +860,16 @@ export class EnhancedAutofill {
     }
 
     // Cover letter and summary fields
-    if (this.matchesPattern(allText, ['cover.?letter', 'motivation', 'why.?interested', 'message', 'additional.?info', 'comments'])) {
+    if (
+      this.matchesPattern(allText, [
+        'cover.?letter',
+        'motivation',
+        'why.?interested',
+        'message',
+        'additional.?info',
+        'comments',
+      ])
+    ) {
       return 'professionalInfo.summary';
     }
     if (this.matchesPattern(allText, ['summary', 'about', 'bio', 'description', 'profile'])) {
@@ -855,10 +899,20 @@ export class EnhancedAutofill {
     if (this.matchesPattern(allText, ['disability', 'identify.?as.?having.?a.?disability', 'disabled'])) {
       return 'preferences.defaultAnswers.disability';
     }
-    if (this.matchesPattern(allText, ['neurodivergent', 'neurodiverse', 'consider.?yourself.?to.?be.?neurodivergent'])) {
+    if (
+      this.matchesPattern(allText, ['neurodivergent', 'neurodiverse', 'consider.?yourself.?to.?be.?neurodivergent'])
+    ) {
       return 'preferences.defaultAnswers.neurodivergent';
     }
-    if (this.matchesPattern(allText, ['ethnicity', 'ethnic', 'race', 'racial', 'how.?would.?your.?describe.?your.?ethnicity'])) {
+    if (
+      this.matchesPattern(allText, [
+        'ethnicity',
+        'ethnic',
+        'race',
+        'racial',
+        'how.?would.?your.?describe.?your.?ethnicity',
+      ])
+    ) {
       return 'preferences.defaultAnswers.ethnicity';
     }
     if (this.matchesPattern(allText, ['veteran', 'military', 'armed.?forces', 'service.?member'])) {
@@ -910,7 +964,9 @@ export class EnhancedAutofill {
   private getFieldOptions(element: HTMLElement): string[] | undefined {
     if (element.tagName.toLowerCase() === 'select') {
       const options = safeQuerySelectorAll('option', element as HTMLSelectElement);
-      return Array.from(options).map(option => option.textContent?.trim() || '').filter(Boolean);
+      return Array.from(options)
+        .map(option => option.textContent?.trim() || '')
+        .filter(Boolean);
     }
     return undefined;
   }
@@ -924,7 +980,7 @@ export class EnhancedAutofill {
     if (element.hasAttribute('required')) {
       rules.push({
         type: 'required',
-        message: 'This field is required'
+        message: 'This field is required',
       });
     }
 
@@ -933,7 +989,7 @@ export class EnhancedAutofill {
       rules.push({
         type: 'maxLength',
         value: parseInt(maxLength),
-        message: `Maximum ${maxLength} characters`
+        message: `Maximum ${maxLength} characters`,
       });
     }
 
@@ -952,13 +1008,12 @@ export class EnhancedAutofill {
     const jobKeywords = ['apply now', 'submit application', 'job application', 'position', 'career opportunity'];
     const hasJobContent = jobKeywords.some(keyword => pageText.includes(keyword));
 
-    const hasPersonalFields = form.fields.some(field =>
-      field.mappedProfileField?.startsWith('personalInfo')
-    );
+    const hasPersonalFields = form.fields.some(field => field.mappedProfileField?.startsWith('personalInfo'));
 
     const hasJobRelatedFields = form.fields.some(field => {
       const label = field.label.toLowerCase();
-      return label.includes('resume') ||
+      return (
+        label.includes('resume') ||
         label.includes('cv') ||
         label.includes('cover letter') ||
         label.includes('experience') ||
@@ -967,7 +1022,8 @@ export class EnhancedAutofill {
         label.includes('start date') ||
         label.includes('work authorization') ||
         label.includes('sponsorship') ||
-        label.includes('relocate');
+        label.includes('relocate')
+      );
     });
 
     const hasFileUpload = form.fields.some(field => field.type === 'file');
@@ -1011,7 +1067,7 @@ export class EnhancedAutofill {
             fieldId: field.id,
             selector: field.selector,
             reason: 'field_not_found',
-            message: 'Field element not found in DOM'
+            message: 'Field element not found in DOM',
           });
           continue;
         }
@@ -1025,14 +1081,14 @@ export class EnhancedAutofill {
               fieldId: field.id,
               selector: field.selector,
               value: 'File upload handled',
-              source: field.mappedProfileField ? 'profile' : 'default_answer'
+              source: field.mappedProfileField ? 'profile' : 'default_answer',
             });
           } else {
             errors.push({
               fieldId: field.id,
               selector: field.selector,
               error: 'File upload failed',
-              message: 'Could not handle file upload for this field'
+              message: 'Could not handle file upload for this field',
             });
           }
           continue;
@@ -1045,7 +1101,7 @@ export class EnhancedAutofill {
             fieldId: field.id,
             selector: field.selector,
             reason: 'no_mapping',
-            message: 'No profile data available for this field'
+            message: 'No profile data available for this field',
           });
           continue;
         }
@@ -1057,7 +1113,7 @@ export class EnhancedAutofill {
             fieldId: field.id,
             selector: field.selector,
             value: value,
-            source: field.mappedProfileField ? 'profile' : 'default_answer'
+            source: field.mappedProfileField ? 'profile' : 'default_answer',
           });
         } else {
           errors.push({
@@ -1065,17 +1121,16 @@ export class EnhancedAutofill {
             selector: field.selector,
             code: 'fill_failed',
             message: 'Failed to fill field with value',
-            recoverable: true
+            recoverable: true,
           });
         }
-
       } catch (error) {
         errors.push({
           fieldId: field.id,
           selector: field.selector,
           code: 'unexpected_error',
           message: error instanceof Error ? error.message : 'Unknown error',
-          recoverable: false
+          recoverable: false,
         });
       }
     }
@@ -1089,7 +1144,7 @@ export class EnhancedAutofill {
       errors,
       totalFields: form.fields.length,
       filledCount: filledFields.length,
-      duration
+      duration,
     };
   }
 
@@ -1181,7 +1236,6 @@ export class EnhancedAutofill {
 
       console.error(`All strategies failed for field: ${field.label}`);
       return false;
-
     } catch (error) {
       console.error('Error in fillFieldElement:', error);
       return false;
@@ -1197,39 +1251,39 @@ export class EnhancedAutofill {
     // Strategy 1: Direct Input - Try standard value assignment first
     strategies.push({
       name: 'Direct Input',
-      execute: () => this.directInputStrategy(element, field, value)
+      execute: () => this.directInputStrategy(element, field, value),
     });
 
     // Strategy 2: Click Events - Simulate user interaction with clicks
     strategies.push({
       name: 'Click Events',
-      execute: () => this.clickEventsStrategy(element, field, value)
+      execute: () => this.clickEventsStrategy(element, field, value),
     });
 
     // Strategy 3: Keyboard Simulation - Simulate typing behavior
     strategies.push({
       name: 'Keyboard Simulation',
-      execute: () => this.keyboardSimulationStrategy(element, field, value)
+      execute: () => this.keyboardSimulationStrategy(element, field, value),
     });
 
     // Strategy 4: DOM Manipulation - Direct DOM property manipulation
     strategies.push({
       name: 'DOM Manipulation',
-      execute: () => this.domManipulationStrategy(element, field, value)
+      execute: () => this.domManipulationStrategy(element, field, value),
     });
 
     // Strategy 5: Component-Specific Fallback - Handle complex components
     if (this.isComplexComponent(element)) {
       strategies.push({
         name: 'Component Fallback',
-        execute: () => this.componentFallbackStrategy(element, field, value)
+        execute: () => this.componentFallbackStrategy(element, field, value),
       });
     }
 
     // Strategy 6: Standard HTML Fallback - Treat as standard HTML element
     strategies.push({
       name: 'Standard HTML Fallback',
-      execute: () => this.standardHtmlFallbackStrategy(element, field, value)
+      execute: () => this.standardHtmlFallbackStrategy(element, field, value),
     });
 
     return strategies;
@@ -1418,7 +1472,7 @@ export class EnhancedAutofill {
         Object.defineProperty(inputElement, 'value', {
           value: value,
           writable: true,
-          configurable: true
+          configurable: true,
         });
 
         inputElement.setAttribute('value', value);
@@ -1441,9 +1495,10 @@ export class EnhancedAutofill {
         const selectElement = element as HTMLSelectElement;
         const options = Array.from(selectElement.options);
 
-        const matchingOption = options.find(option =>
-          option.value.toLowerCase() === value.toLowerCase() ||
-          option.textContent?.toLowerCase() === value.toLowerCase()
+        const matchingOption = options.find(
+          option =>
+            option.value.toLowerCase() === value.toLowerCase() ||
+            option.textContent?.toLowerCase() === value.toLowerCase(),
         );
 
         if (matchingOption) {
@@ -1501,7 +1556,10 @@ export class EnhancedAutofill {
       }
 
       // Try to find clickable elements that might open the component
-      const clickableElements = safeQuerySelectorAll('[role="button"], button, [class*="dropdown"], [class*="select"]', element);
+      const clickableElements = safeQuerySelectorAll(
+        '[role="button"], button, [class*="dropdown"], [class*="select"]',
+        element,
+      );
       for (let i = 0; i < clickableElements.length; i++) {
         const clickable = clickableElements[i] as HTMLElement;
         try {
@@ -1559,9 +1617,10 @@ export class EnhancedAutofill {
         case 'select':
           const selectElement = element as HTMLSelectElement;
           const options = Array.from(selectElement.options);
-          const matchingOption = options.find(option =>
-            option.value.toLowerCase().includes(value.toLowerCase()) ||
-            option.textContent?.toLowerCase().includes(value.toLowerCase())
+          const matchingOption = options.find(
+            option =>
+              option.value.toLowerCase().includes(value.toLowerCase()) ||
+              option.textContent?.toLowerCase().includes(value.toLowerCase()),
           );
 
           if (matchingOption) {
@@ -1625,7 +1684,9 @@ export class EnhancedAutofill {
   private handleCheckboxField(element: HTMLInputElement, value: string): boolean {
     const shouldCheck = this.interpretCheckboxValue(value, element);
 
-    console.log(`Checkbox field: ${this.getFieldLabel(element)} - Value: "${value}" -> ${shouldCheck ? 'CHECK' : 'UNCHECK'}`);
+    console.log(
+      `Checkbox field: ${this.getFieldLabel(element)} - Value: "${value}" -> ${shouldCheck ? 'CHECK' : 'UNCHECK'}`,
+    );
 
     element.checked = shouldCheck;
     this.triggerComprehensiveEvents(element);
@@ -1707,7 +1768,10 @@ export class EnhancedAutofill {
   /**
    * Find the best matching radio option
    */
-  private findBestRadioOption(value: string, radioGroup: HTMLInputElement[]): { element: HTMLInputElement, label: string, score: number } | null {
+  private findBestRadioOption(
+    value: string,
+    radioGroup: HTMLInputElement[],
+  ): { element: HTMLInputElement; label: string; score: number } | null {
     const options = radioGroup.map(radio => {
       const label = this.getRadioLabel(radio);
       const score = this.calculateOptionMatchScore(value, label, radio.value);
@@ -1799,7 +1863,6 @@ export class EnhancedAutofill {
       this.triggerComprehensiveEvents(element);
 
       return element.checked === shouldCheck;
-
     } catch (error) {
       console.error('Alternative checkbox handling failed:', error);
       return false;
@@ -1810,9 +1873,7 @@ export class EnhancedAutofill {
    * Trigger comprehensive events for form elements
    */
   private triggerComprehensiveEvents(element: HTMLElement): void {
-    const events = [
-      'focus', 'input', 'change', 'blur', 'click'
-    ];
+    const events = ['focus', 'input', 'change', 'blur', 'click'];
 
     events.forEach(eventType => {
       element.dispatchEvent(new Event(eventType, { bubbles: true, cancelable: true }));
@@ -1828,11 +1889,13 @@ export class EnhancedAutofill {
    * Check if element is a complex component (React Select, etc.)
    */
   private isComplexComponent(element: HTMLElement): boolean {
-    return this.isReactSelectComponent(element) ||
+    return (
+      this.isReactSelectComponent(element) ||
       element.classList.contains('vue-select') ||
       element.classList.contains('ng-select') ||
       element.hasAttribute('data-component') ||
-      element.querySelector('[class*="select__"], [class*="dropdown__"]') !== null;
+      element.querySelector('[class*="select__"], [class*="dropdown__"]') !== null
+    );
   }
 
   /**
@@ -1840,11 +1903,13 @@ export class EnhancedAutofill {
    */
   private isElementVisible(element: HTMLElement): boolean {
     const style = window.getComputedStyle(element);
-    return style.display !== 'none' &&
+    return (
+      style.display !== 'none' &&
       style.visibility !== 'hidden' &&
       style.opacity !== '0' &&
       element.offsetWidth > 0 &&
-      element.offsetHeight > 0;
+      element.offsetHeight > 0
+    );
   }
 
   /**
@@ -1875,7 +1940,10 @@ export class EnhancedAutofill {
   private async clickBasedSelectFill(element: HTMLElement, value: string): Promise<boolean> {
     try {
       // Find the clickable control element
-      const control = element.querySelector('[class*="control"], [class*="select__control"], .react-select__control') as HTMLElement || element;
+      const control =
+        (element.querySelector(
+          '[class*="control"], [class*="select__control"], .react-select__control',
+        ) as HTMLElement) || element;
 
       console.log(`Clicking React Select control to open dropdown`);
       await this.triggerComprehensiveClick(control);
@@ -1890,11 +1958,11 @@ export class EnhancedAutofill {
         'li[data-value]',
         '[class*="option"]',
         '[class*="menu"] > div',
-        '[class*="menu"] li'
+        '[class*="menu"] li',
       ];
 
       // Collect all visible options with their text and values
-      const allOptions: { element: HTMLElement, text: string, value?: string }[] = [];
+      const allOptions: { element: HTMLElement; text: string; value?: string }[] = [];
 
       for (const selector of optionSelectors) {
         const options = safeQuerySelectorAll(selector, document.body);
@@ -1910,7 +1978,7 @@ export class EnhancedAutofill {
               allOptions.push({
                 element: option,
                 text: optionText,
-                value: optionValue || undefined
+                value: optionValue || undefined,
               });
             }
           }
@@ -2011,14 +2079,12 @@ export class EnhancedAutofill {
     const optionWords = optionLower.split(/\s+/);
 
     // Check if all value words appear as complete words in option
-    const allWordsMatch = valueWords.every(word =>
-      optionWords.some(optionWord => optionWord === word)
-    );
+    const allWordsMatch = valueWords.every(word => optionWords.some(optionWord => optionWord === word));
     if (allWordsMatch && valueWords.length > 0) score += 80;
 
     // Partial word matches (lower priority)
     const partialMatches = valueWords.filter(word =>
-      optionWords.some(optionWord => optionWord.includes(word) || word.includes(optionWord))
+      optionWords.some(optionWord => optionWord.includes(word) || word.includes(optionWord)),
     );
     score += (partialMatches.length / valueWords.length) * 40;
 
@@ -2039,12 +2105,20 @@ export class EnhancedAutofill {
   private getSpecialCaseScore(value: string, optionText: string): number {
     const specialCases = [
       // Work authorization patterns
-      { values: ['citizen', 'us citizen', 'american citizen'], patterns: ['citizen', 'yes', 'authorized', 'eligible'], score: 60 },
+      {
+        values: ['citizen', 'us citizen', 'american citizen'],
+        patterns: ['citizen', 'yes', 'authorized', 'eligible'],
+        score: 60,
+      },
       { values: ['yes', 'true', '1'], patterns: ['yes', 'true', 'agree', 'accept', 'confirm'], score: 70 },
       { values: ['no', 'false', '0'], patterns: ['no', 'false', 'decline', 'reject', 'disagree'], score: 70 },
 
       // Privacy and demographic patterns
-      { values: ['prefer not to say', 'decline to answer'], patterns: ['prefer', 'decline', 'not specified', 'rather not'], score: 50 },
+      {
+        values: ['prefer not to say', 'decline to answer'],
+        patterns: ['prefer', 'decline', 'not specified', 'rather not'],
+        score: 50,
+      },
       { values: ['male', 'man'], patterns: ['male', 'man', 'masculine'], score: 60 },
       { values: ['female', 'woman'], patterns: ['female', 'woman', 'feminine'], score: 60 },
       { values: ['non-binary', 'nonbinary'], patterns: ['non-binary', 'nonbinary', 'other', 'different'], score: 60 },
@@ -2056,7 +2130,7 @@ export class EnhancedAutofill {
       // Education levels
       { values: ['bachelor', 'bachelors'], patterns: ['bachelor', 'undergraduate', 'ba', 'bs'], score: 50 },
       { values: ['master', 'masters'], patterns: ['master', 'graduate', 'ma', 'ms', 'mba'], score: 50 },
-      { values: ['phd', 'doctorate'], patterns: ['phd', 'doctorate', 'doctoral'], score: 50 }
+      { values: ['phd', 'doctorate'], patterns: ['phd', 'doctorate', 'doctoral'], score: 50 },
     ];
 
     for (const caseGroup of specialCases) {
@@ -2073,13 +2147,17 @@ export class EnhancedAutofill {
   /**
    * Find the best matching option with confidence scoring
    */
-  private findBestMatchingOption(value: string, options: { element: HTMLElement, text: string, value?: string }[]): { element: HTMLElement, score: number } | null {
-    let bestMatch: { element: HTMLElement, score: number } | null = null;
+  private findBestMatchingOption(
+    value: string,
+    options: { element: HTMLElement; text: string; value?: string }[],
+  ): { element: HTMLElement; score: number } | null {
+    let bestMatch: { element: HTMLElement; score: number } | null = null;
 
     for (const option of options) {
       const score = this.calculateOptionMatchScore(value, option.text, option.value);
 
-      if (score > 30 && (!bestMatch || score > bestMatch.score)) { // Minimum threshold of 30
+      if (score > 30 && (!bestMatch || score > bestMatch.score)) {
+        // Minimum threshold of 30
         bestMatch = { element: option.element, score };
       }
     }
@@ -2142,7 +2220,6 @@ export class EnhancedAutofill {
       // Strategy 4: Pointer events (for modern browsers)
       element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
       element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true }));
-
     } catch (error) {
       console.warn('Some click events failed, but continuing:', error);
     }
@@ -2151,7 +2228,11 @@ export class EnhancedAutofill {
   /**
    * Verify that an option selection worked
    */
-  private async verifyOptionSelection(control: HTMLElement, selectedOption: HTMLElement, optionText: string): Promise<boolean> {
+  private async verifyOptionSelection(
+    control: HTMLElement,
+    selectedOption: HTMLElement,
+    optionText: string,
+  ): Promise<boolean> {
     await this.delay(100);
 
     // Check if dropdown closed (option no longer visible)
@@ -2162,7 +2243,8 @@ export class EnhancedAutofill {
     const controlInput = control.querySelector('input') as HTMLInputElement;
     const inputValue = controlInput?.value?.toLowerCase().trim() || '';
 
-    const valueMatches = controlValue.includes(optionText.toLowerCase()) ||
+    const valueMatches =
+      controlValue.includes(optionText.toLowerCase()) ||
       inputValue.includes(optionText.toLowerCase()) ||
       this.calculateOptionMatchScore(optionText, controlValue) > 50;
 
@@ -2275,7 +2357,6 @@ export class EnhancedAutofill {
 
       // Mark as successful since we have file data available
       return true;
-
     } catch (error) {
       console.error('Error handling file upload:', error);
       return false;
@@ -2290,7 +2371,9 @@ export class EnhancedAutofill {
     const componentInfo = this.getComponentInfo(element);
 
     if (componentInfo) {
-      console.log(`Detected ${componentInfo.type} component with confidence ${componentInfo.confidence} using ${componentInfo.detectionMethod}`);
+      console.log(
+        `Detected ${componentInfo.type} component with confidence ${componentInfo.confidence} using ${componentInfo.detectionMethod}`,
+      );
 
       // Handle different component types with appropriate strategies
       switch (componentInfo.type) {
@@ -2325,23 +2408,26 @@ export class EnhancedAutofill {
       const selectElement = element as HTMLSelectElement;
       const options = Array.from(selectElement.options);
 
-      let matchedOption = options.find(option =>
-        option.value.toLowerCase() === value.toLowerCase() ||
-        option.textContent?.toLowerCase() === value.toLowerCase()
+      let matchedOption = options.find(
+        option =>
+          option.value.toLowerCase() === value.toLowerCase() ||
+          option.textContent?.toLowerCase() === value.toLowerCase(),
       );
 
       if (!matchedOption) {
-        matchedOption = options.find(option =>
-          option.textContent?.toLowerCase().includes(value.toLowerCase()) ||
-          value.toLowerCase().includes(option.textContent?.toLowerCase() || '')
+        matchedOption = options.find(
+          option =>
+            option.textContent?.toLowerCase().includes(value.toLowerCase()) ||
+            value.toLowerCase().includes(option.textContent?.toLowerCase() || ''),
         );
       }
 
       if (!matchedOption && value.toLowerCase().includes('citizen')) {
-        matchedOption = options.find(option =>
-          option.textContent?.toLowerCase().includes('citizen') ||
-          option.textContent?.toLowerCase().includes('authorized') ||
-          option.textContent?.toLowerCase().includes('yes')
+        matchedOption = options.find(
+          option =>
+            option.textContent?.toLowerCase().includes('citizen') ||
+            option.textContent?.toLowerCase().includes('authorized') ||
+            option.textContent?.toLowerCase().includes('yes'),
         );
       }
 
@@ -2379,10 +2465,16 @@ export class EnhancedAutofill {
   /**
    * Handle React Select component with enhanced detection info
    */
-  private async handleReactSelectField(element: HTMLElement, value: string, componentInfo?: ComponentInfo): Promise<void> {
+  private async handleReactSelectField(
+    element: HTMLElement,
+    value: string,
+    componentInfo?: ComponentInfo,
+  ): Promise<void> {
     try {
       if (componentInfo) {
-        console.log(`Attempting to fill React Select (${componentInfo.detectionMethod}, confidence: ${componentInfo.confidence}) with value: ${value}`);
+        console.log(
+          `Attempting to fill React Select (${componentInfo.detectionMethod}, confidence: ${componentInfo.confidence}) with value: ${value}`,
+        );
         console.log('Component metadata:', componentInfo.metadata);
       } else {
         console.log(`Attempting to fill React Select with value: ${value}`);
@@ -2406,7 +2498,11 @@ export class EnhancedAutofill {
   /**
    * Handle custom select components (Vue, Angular, etc.)
    */
-  private async handleCustomSelectField(element: HTMLElement, value: string, componentInfo: ComponentInfo): Promise<void> {
+  private async handleCustomSelectField(
+    element: HTMLElement,
+    value: string,
+    componentInfo: ComponentInfo,
+  ): Promise<void> {
     try {
       console.log(`Handling ${componentInfo.type} component with confidence ${componentInfo.confidence}`);
 
@@ -2427,7 +2523,6 @@ export class EnhancedAutofill {
 
       // Fallback to standard input handling
       await this.fallbackInputFill(element, value);
-
     } catch (error) {
       console.error(`${componentInfo.type} handling failed:`, error);
       await this.fallbackInputFill(element, value);
@@ -2442,15 +2537,17 @@ export class EnhancedAutofill {
       const selectElement = element as HTMLSelectElement;
       const options = Array.from(selectElement.options);
 
-      let matchedOption = options.find(option =>
-        option.value.toLowerCase() === value.toLowerCase() ||
-        option.textContent?.toLowerCase() === value.toLowerCase()
+      let matchedOption = options.find(
+        option =>
+          option.value.toLowerCase() === value.toLowerCase() ||
+          option.textContent?.toLowerCase() === value.toLowerCase(),
       );
 
       if (!matchedOption) {
-        matchedOption = options.find(option =>
-          option.textContent?.toLowerCase().includes(value.toLowerCase()) ||
-          value.toLowerCase().includes(option.textContent?.toLowerCase() || '')
+        matchedOption = options.find(
+          option =>
+            option.textContent?.toLowerCase().includes(value.toLowerCase()) ||
+            value.toLowerCase().includes(option.textContent?.toLowerCase() || ''),
         );
       }
 
@@ -2485,11 +2582,7 @@ export class EnhancedAutofill {
       await this.delay(300);
 
       // Look for options in the dropdown
-      const optionSelectors = [
-        '.select__option',
-        '.react-select__option',
-        '[role="option"]'
-      ];
+      const optionSelectors = ['.select__option', '.react-select__option', '[role="option"]'];
 
       let optionFound = false;
 
@@ -2524,9 +2617,11 @@ export class EnhancedAutofill {
           for (const option of options) {
             const optionText = option.textContent?.toLowerCase().trim() || '';
 
-            if (optionText.includes('prefer not to say') ||
+            if (
+              optionText.includes('prefer not to say') ||
               optionText.includes('prefer not') ||
-              optionText.includes('not to say')) {
+              optionText.includes('not to say')
+            ) {
               console.log(`Clicking "Prefer not to say" option: "${optionText}"`);
               (option as HTMLElement).click();
               await this.delay(100);
@@ -2540,7 +2635,6 @@ export class EnhancedAutofill {
       }
 
       return optionFound;
-
     } catch (error) {
       console.error('Direct React Select fill failed:', error);
       return false;
@@ -2553,7 +2647,10 @@ export class EnhancedAutofill {
   private async fallbackReactSelectFill(element: HTMLElement, value: string): Promise<void> {
     try {
       // Find the input element within React Select
-      const input = safeQuerySelector('input[role="combobox"], .select__input input, input', element) as HTMLInputElement;
+      const input = safeQuerySelector(
+        'input[role="combobox"], .select__input input, input',
+        element,
+      ) as HTMLInputElement;
       if (!input) {
         console.log('Could not find input in React Select component');
         return;
@@ -2585,12 +2682,7 @@ export class EnhancedAutofill {
       await this.delay(300); // Wait for filtering
 
       // Try to find and click the matching option
-      const optionSelectors = [
-        '.select__option',
-        '.react-select__option',
-        '[role="option"]',
-        '[class*="option"]'
-      ];
+      const optionSelectors = ['.select__option', '.react-select__option', '[role="option"]', '[class*="option"]'];
 
       let optionFound = false;
       for (const selector of optionSelectors) {
@@ -2619,13 +2711,10 @@ export class EnhancedAutofill {
         // If still no selection, try Tab
         input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
       }
-
     } catch (error) {
       console.error('Fallback React Select handling failed:', error);
     }
   }
-
-
 
   /**
    * Enhanced option matching logic
@@ -2641,18 +2730,19 @@ export class EnhancedAutofill {
 
     // Special cases for work authorization
     if (val.includes('citizen') || val.includes('authorized')) {
-      return option.includes('citizen') ||
+      return (
+        option.includes('citizen') ||
         option.includes('authorized') ||
         option.includes('yes') ||
-        option.includes('eligible');
+        option.includes('eligible')
+      );
     }
 
     // Special cases for privacy/consent
     if (val.includes('consent') || val.includes('agree')) {
-      return option.includes('agree') ||
-        option.includes('consent') ||
-        option.includes('yes') ||
-        option.includes('accept');
+      return (
+        option.includes('agree') || option.includes('consent') || option.includes('yes') || option.includes('accept')
+      );
     }
 
     // Fuzzy matching for similar words
@@ -2660,16 +2750,18 @@ export class EnhancedAutofill {
     const optionWords = option.split(/\s+/);
 
     return valueWords.some(valueWord =>
-      optionWords.some(optionWord =>
-        optionWord.includes(valueWord) || valueWord.includes(optionWord)
-      )
+      optionWords.some(optionWord => optionWord.includes(valueWord) || valueWord.includes(optionWord)),
     );
   }
 
   /**
    * Adaptive React Select filling with component-specific optimizations
    */
-  private async adaptiveReactSelectFill(element: HTMLElement, value: string, componentInfo?: ComponentInfo): Promise<boolean> {
+  private async adaptiveReactSelectFill(
+    element: HTMLElement,
+    value: string,
+    componentInfo?: ComponentInfo,
+  ): Promise<boolean> {
     if (!componentInfo) {
       return await this.directReactSelectFill(element, value);
     }
@@ -2690,12 +2782,16 @@ export class EnhancedAutofill {
   /**
    * Multi-strategy React Select filling with fallbacks
    */
-  private async multiStrategyReactSelectFill(element: HTMLElement, value: string, componentInfo?: ComponentInfo): Promise<void> {
+  private async multiStrategyReactSelectFill(
+    element: HTMLElement,
+    value: string,
+    componentInfo?: ComponentInfo,
+  ): Promise<void> {
     const strategies = [
       () => this.reactSelectDirectInputStrategy(element, value, componentInfo),
       () => this.clickAndTypeStrategy(element, value, componentInfo),
       () => this.keyboardNavigationStrategy(element, value, componentInfo),
-      () => this.reactSelectDomManipulationStrategy(element, value, componentInfo)
+      () => this.reactSelectDomManipulationStrategy(element, value, componentInfo),
     ];
 
     for (let i = 0; i < strategies.length; i++) {
@@ -2718,7 +2814,11 @@ export class EnhancedAutofill {
   /**
    * Optimized React Select fill for high-confidence detections
    */
-  private async optimizedReactSelectFill(element: HTMLElement, value: string, componentInfo: ComponentInfo): Promise<boolean> {
+  private async optimizedReactSelectFill(
+    element: HTMLElement,
+    value: string,
+    componentInfo: ComponentInfo,
+  ): Promise<boolean> {
     try {
       const input = componentInfo.input || this.findReactSelectInput(element);
       if (!input) return false;
@@ -2740,7 +2840,11 @@ export class EnhancedAutofill {
   /**
    * Validated React Select fill for medium-confidence detections
    */
-  private async validatedReactSelectFill(element: HTMLElement, value: string, componentInfo: ComponentInfo): Promise<boolean> {
+  private async validatedReactSelectFill(
+    element: HTMLElement,
+    value: string,
+    componentInfo: ComponentInfo,
+  ): Promise<boolean> {
     try {
       // Validate component structure before proceeding
       if (!this.validateReactSelectStructure(element, componentInfo)) {
@@ -2758,7 +2862,11 @@ export class EnhancedAutofill {
   /**
    * Conservative React Select fill for low-confidence detections
    */
-  private async conservativeReactSelectFill(element: HTMLElement, value: string, componentInfo: ComponentInfo): Promise<boolean> {
+  private async conservativeReactSelectFill(
+    element: HTMLElement,
+    value: string,
+    componentInfo: ComponentInfo,
+  ): Promise<boolean> {
     try {
       // Use minimal interaction to avoid breaking fragile components
       const input = this.findReactSelectInput(element);
@@ -2783,27 +2891,30 @@ export class EnhancedAutofill {
   /**
    * Get custom select strategies based on component type
    */
-  private getCustomSelectStrategies(componentType: string): Array<(element: HTMLElement, value: string, componentInfo: ComponentInfo) => Promise<boolean>> {
-    const strategies: Array<(element: HTMLElement, value: string, componentInfo: ComponentInfo) => Promise<boolean>> = [];
+  private getCustomSelectStrategies(
+    componentType: string,
+  ): Array<(element: HTMLElement, value: string, componentInfo: ComponentInfo) => Promise<boolean>> {
+    const strategies: Array<(element: HTMLElement, value: string, componentInfo: ComponentInfo) => Promise<boolean>> =
+      [];
 
     switch (componentType) {
       case 'vue-select':
         strategies.push(
           (el, val, info) => this.vueSelectStrategy(el, val, info),
-          (el, val, info) => this.genericSelectStrategy(el, val, info)
+          (el, val, info) => this.genericSelectStrategy(el, val, info),
         );
         break;
       case 'angular-select':
         strategies.push(
           (el, val, info) => this.angularSelectStrategy(el, val, info),
           (el, val, info) => this.materialSelectStrategy(el, val, info),
-          (el, val, info) => this.genericSelectStrategy(el, val, info)
+          (el, val, info) => this.genericSelectStrategy(el, val, info),
         );
         break;
       case 'custom-select':
         strategies.push(
           (el, val, info) => this.genericSelectStrategy(el, val, info),
-          (el, val, info) => this.dropdownStrategy(el, val, info)
+          (el, val, info) => this.dropdownStrategy(el, val, info),
         );
         break;
     }
@@ -2811,12 +2922,14 @@ export class EnhancedAutofill {
     return strategies;
   }
 
-
-
   /**
    * React Select specific strategy methods
    */
-  private async reactSelectDirectInputStrategy(element: HTMLElement, value: string, componentInfo?: ComponentInfo): Promise<boolean> {
+  private async reactSelectDirectInputStrategy(
+    element: HTMLElement,
+    value: string,
+    componentInfo?: ComponentInfo,
+  ): Promise<boolean> {
     try {
       const input = componentInfo?.input || this.findReactSelectInput(element);
       if (!input) {
@@ -2846,7 +2959,7 @@ export class EnhancedAutofill {
         '.select__option',
         '.react-select__option',
         '[class*="option"]',
-        '[data-value]'
+        '[data-value]',
       ];
 
       for (const selector of optionSelectors) {
@@ -2857,9 +2970,11 @@ export class EnhancedAutofill {
             const optionText = option.textContent?.toLowerCase().trim() || '';
             const optionValue = option.getAttribute('data-value')?.toLowerCase() || '';
 
-            if (optionText.includes(value.toLowerCase()) ||
+            if (
+              optionText.includes(value.toLowerCase()) ||
               optionValue.includes(value.toLowerCase()) ||
-              value.toLowerCase().includes(optionText)) {
+              value.toLowerCase().includes(optionText)
+            ) {
               console.log(`Clicking React Select option: ${optionText}`);
               await this.triggerComprehensiveClick(option);
               await this.delay(100);
@@ -2880,7 +2995,11 @@ export class EnhancedAutofill {
     }
   }
 
-  private async clickAndTypeStrategy(element: HTMLElement, value: string, componentInfo?: ComponentInfo): Promise<boolean> {
+  private async clickAndTypeStrategy(
+    element: HTMLElement,
+    value: string,
+    componentInfo?: ComponentInfo,
+  ): Promise<boolean> {
     const control = componentInfo?.control || element;
     const input = componentInfo?.input || this.findReactSelectInput(element);
 
@@ -2911,7 +3030,11 @@ export class EnhancedAutofill {
     return false;
   }
 
-  private async keyboardNavigationStrategy(element: HTMLElement, value: string, componentInfo?: ComponentInfo): Promise<boolean> {
+  private async keyboardNavigationStrategy(
+    element: HTMLElement,
+    value: string,
+    componentInfo?: ComponentInfo,
+  ): Promise<boolean> {
     const input = componentInfo?.input || this.findReactSelectInput(element);
     if (!input) return false;
 
@@ -2929,7 +3052,11 @@ export class EnhancedAutofill {
     return true;
   }
 
-  private async reactSelectDomManipulationStrategy(element: HTMLElement, value: string, componentInfo?: ComponentInfo): Promise<boolean> {
+  private async reactSelectDomManipulationStrategy(
+    element: HTMLElement,
+    value: string,
+    componentInfo?: ComponentInfo,
+  ): Promise<boolean> {
     try {
       // Direct DOM manipulation as last resort for React Select
       const input = componentInfo?.input || this.findReactSelectInput(element);
@@ -2951,8 +3078,6 @@ export class EnhancedAutofill {
     }
   }
 
-
-
   /**
    * Component-specific strategies
    */
@@ -2971,7 +3096,11 @@ export class EnhancedAutofill {
     return true;
   }
 
-  private async angularSelectStrategy(element: HTMLElement, value: string, componentInfo: ComponentInfo): Promise<boolean> {
+  private async angularSelectStrategy(
+    element: HTMLElement,
+    value: string,
+    componentInfo: ComponentInfo,
+  ): Promise<boolean> {
     // Angular Select specific handling
     const input = element.querySelector('input') as HTMLInputElement;
     if (!input) return false;
@@ -2986,7 +3115,11 @@ export class EnhancedAutofill {
     return true;
   }
 
-  private async materialSelectStrategy(element: HTMLElement, value: string, componentInfo: ComponentInfo): Promise<boolean> {
+  private async materialSelectStrategy(
+    element: HTMLElement,
+    value: string,
+    componentInfo: ComponentInfo,
+  ): Promise<boolean> {
     // Angular Material Select specific handling
     if (componentInfo.metadata.isMaterialSelect) {
       element.click(); // Open dropdown
@@ -3004,7 +3137,11 @@ export class EnhancedAutofill {
     return false;
   }
 
-  private async genericSelectStrategy(element: HTMLElement, value: string, componentInfo: ComponentInfo): Promise<boolean> {
+  private async genericSelectStrategy(
+    element: HTMLElement,
+    value: string,
+    componentInfo: ComponentInfo,
+  ): Promise<boolean> {
     // Generic custom select handling
     const input = element.querySelector('input') as HTMLInputElement;
     if (input) {
@@ -3043,7 +3180,7 @@ export class EnhancedAutofill {
       '.select__input input',
       '.react-select__input input',
       'input[class*="input"]',
-      'input'
+      'input',
     ];
 
     for (const selector of selectors) {
@@ -3067,7 +3204,11 @@ export class EnhancedAutofill {
     return true;
   }
 
-  private async reactSelectClassBasedFill(element: HTMLElement, input: HTMLInputElement, value: string): Promise<boolean> {
+  private async reactSelectClassBasedFill(
+    element: HTMLElement,
+    input: HTMLInputElement,
+    value: string,
+  ): Promise<boolean> {
     // Optimized for class-based React Select detection
     const control = element.querySelector('.select__control, .react-select__control') as HTMLElement;
     if (control) control.click();
@@ -3199,14 +3340,14 @@ export class EnhancedAutofill {
 
     observer.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
     });
   }
 
   /**
    * Debounce utility function
    */
-  private debounce(func: Function, wait: number): void {
+  private debounce(func: () => void, wait: number): void {
     clearTimeout((this as any).debounceTimer);
     (this as any).debounceTimer = setTimeout(func, wait);
   }
@@ -3233,12 +3374,21 @@ export class EnhancedAutofill {
    * Clear existing form indicators
    */
   private clearFormIndicators(): void {
+    // Remove tracked indicators
     this.formIndicators.forEach(indicator => {
       if (indicator.parentNode) {
         indicator.parentNode.removeChild(indicator);
       }
     });
     this.formIndicators = [];
+
+    // Also remove any orphaned indicators that might not be tracked
+    const orphanedIndicators = document.querySelectorAll('[title*="This field will be filled from your profile"]');
+    orphanedIndicators.forEach(indicator => {
+      if (indicator.parentNode) {
+        indicator.parentNode.removeChild(indicator);
+      }
+    });
   }
 
   /**
@@ -3256,9 +3406,15 @@ export class EnhancedAutofill {
       if (field.mappedProfileField) {
         const fieldElement = safeQuerySelector(field.selector);
         if (fieldElement) {
-          const fieldIndicator = this.createFieldIndicator(field);
-          fieldElement.parentNode?.insertBefore(fieldIndicator, fieldElement.nextSibling);
-          this.formIndicators.push(fieldIndicator);
+          // Check if indicator already exists for this field
+          const existingIndicator = fieldElement.parentNode?.querySelector(
+            '[title*="This field will be filled from your profile"]',
+          );
+          if (!existingIndicator) {
+            const fieldIndicator = this.createFieldIndicator(field);
+            fieldElement.parentNode?.insertBefore(fieldIndicator, fieldElement.nextSibling);
+            this.formIndicators.push(fieldIndicator);
+          }
         }
       }
     });
@@ -3382,7 +3538,7 @@ export class EnhancedAutofill {
         const result = await this.handleAutofillTrigger({
           type: 'autofill:trigger',
           source: 'popup',
-          data: { tabId: 0 }
+          data: { tabId: 0 },
         });
 
         // Show success state briefly
@@ -3402,7 +3558,6 @@ export class EnhancedAutofill {
             spinStyle.parentNode.removeChild(spinStyle);
           }
         }, 3000);
-
       } catch (error) {
         console.error('Autofill failed:', error);
 
@@ -3459,7 +3614,7 @@ export class EnhancedAutofill {
 
         return {
           top: Math.min(Math.max(0, position.top), maxTop),
-          left: Math.min(Math.max(0, position.left), maxLeft)
+          left: Math.min(Math.max(0, position.left), maxLeft),
         };
       }
     } catch (error) {
@@ -3577,7 +3732,7 @@ export class EnhancedAutofill {
         clientX: touch.clientX,
         clientY: touch.clientY,
         bubbles: true,
-        cancelable: true
+        cancelable: true,
       });
 
       handleMouseDown(mouseEvent);
@@ -3593,7 +3748,7 @@ export class EnhancedAutofill {
         clientX: touch.clientX,
         clientY: touch.clientY,
         bubbles: true,
-        cancelable: true
+        cancelable: true,
       });
 
       handleMouseMove(mouseEvent);
@@ -3604,7 +3759,7 @@ export class EnhancedAutofill {
 
       const mouseEvent = new MouseEvent('mouseup', {
         bubbles: true,
-        cancelable: true
+        cancelable: true,
       });
 
       handleMouseUp(mouseEvent);
@@ -3617,15 +3772,19 @@ export class EnhancedAutofill {
     element.addEventListener('touchend', handleTouchEnd);
 
     // Prevent default click behavior when dragging
-    element.addEventListener('click', (e) => {
-      if (hasMoved) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    }, true);
+    element.addEventListener(
+      'click',
+      e => {
+        if (hasMoved) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      },
+      true,
+    );
 
     // Double-click to reset position
-    element.addEventListener('dblclick', (e) => {
+    element.addEventListener('dblclick', e => {
       e.preventDefault();
       e.stopPropagation();
 
@@ -3832,8 +3991,8 @@ export class EnhancedAutofill {
     if (forms.length === 0) return null;
     if (forms.length === 1) return forms[0];
     return forms.sort((a, b) => {
-      const scoreA = a.confidence + (a.fields.length * 0.01);
-      const scoreB = b.confidence + (b.fields.length * 0.01);
+      const scoreA = a.confidence + a.fields.length * 0.01;
+      const scoreB = b.confidence + b.fields.length * 0.01;
       return scoreB - scoreA;
     })[0];
   }

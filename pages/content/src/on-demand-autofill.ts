@@ -4,14 +4,7 @@
  */
 
 import { profileStorage } from '@extension/storage';
-import type { 
-  UserProfile, 
-  DetectedForm, 
-  FormField, 
-  AutofillResult,
-  JobPlatform,
-  FieldType 
-} from '@extension/shared';
+import type { UserProfile, DetectedForm, FormField, AutofillResult, JobPlatform, FieldType } from '@extension/shared';
 import { UniversalComponentHandler } from './components/universal-handler';
 import { ProfileDataValidator } from './utils/profile-data-validator';
 
@@ -62,7 +55,7 @@ export class OnDemandAutofill {
             console.error('Autofill trigger failed:', error);
             sendResponse({
               success: false,
-              error: error.message || 'Unknown error occurred'
+              error: error.message || 'Unknown error occurred',
             });
           });
         return true; // Keep message channel open for async response
@@ -75,12 +68,12 @@ export class OnDemandAutofill {
             console.error('Form analysis failed:', error);
             sendResponse({
               success: false,
-              error: error.message || 'Analysis failed'
+              error: error.message || 'Analysis failed',
             });
           });
         return true;
       }
-      
+
       return false; // Don't keep channel open for other message types
     });
   }
@@ -140,15 +133,14 @@ export class OnDemandAutofill {
           platform: analysis.platform,
           duration: result.duration,
           skippedCount: result.skippedFields.length,
-          errorCount: result.errors.length
-        }
+          errorCount: result.errors.length,
+        },
       });
 
       // Show visual feedback on page
       this.showAutofillFeedback(result, analysis.platform);
 
       return result;
-
     } finally {
       this.isProcessing = false;
     }
@@ -161,23 +153,22 @@ export class OnDemandAutofill {
     try {
       const platform = this.detectPlatform();
       const forms = await this.detectForms(platform);
-      
+
       const confidence = this.calculateConfidence(platform, forms);
 
       return {
         success: true,
         platform,
         forms,
-        confidence
+        confidence,
       };
-
     } catch (error) {
       return {
         success: false,
         platform: 'custom',
         forms: [],
         confidence: 0,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -193,11 +184,11 @@ export class OnDemandAutofill {
     if (hostname.includes('linkedin.com')) {
       return 'linkedin';
     }
-    
+
     if (hostname.includes('indeed.com')) {
       return 'indeed';
     }
-    
+
     if (hostname.includes('workday') || hostname.includes('myworkdayjobs.com')) {
       return 'workday';
     }
@@ -266,7 +257,7 @@ export class OnDemandAutofill {
         '.form-container',
         '.application-form',
         '.job-application',
-        '[role="form"]'
+        '[role="form"]',
       ];
 
       for (const selector of containerSelectors) {
@@ -298,7 +289,7 @@ export class OnDemandAutofill {
   private async analyzeFormContainer(container: HTMLElement, platform: JobPlatform): Promise<DetectedForm | null> {
     try {
       const fields = this.extractFieldsFromContainer(container);
-      
+
       if (fields.length === 0) {
         return null;
       }
@@ -316,9 +307,8 @@ export class OnDemandAutofill {
         detectedAt: new Date(),
         isMultiStep: this.isMultiStepContainer(container),
         currentStep: this.getCurrentStepFromContainer(container),
-        totalSteps: this.getTotalStepsFromContainer(container)
+        totalSteps: this.getTotalStepsFromContainer(container),
       };
-
     } catch (error) {
       console.error('Error analyzing form container:', error);
       return null;
@@ -331,8 +321,9 @@ export class OnDemandAutofill {
   private async analyzePageAsForm(platform: JobPlatform): Promise<DetectedForm | null> {
     try {
       const fields = this.extractFieldsFromContainer(document.body);
-      
-      if (fields.length < 3) { // Require at least 3 fields for page-level detection
+
+      if (fields.length < 3) {
+        // Require at least 3 fields for page-level detection
         return null;
       }
 
@@ -348,9 +339,8 @@ export class OnDemandAutofill {
         detectedAt: new Date(),
         isMultiStep: this.isMultiStepPage(),
         currentStep: undefined,
-        totalSteps: undefined
+        totalSteps: undefined,
       };
-
     } catch (error) {
       console.error('Error analyzing page as form:', error);
       return null;
@@ -366,7 +356,7 @@ export class OnDemandAutofill {
 
     for (let i = 0; i < inputs.length; i++) {
       const element = inputs[i] as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-      
+
       // Skip hidden fields, buttons, and submit inputs
       if (this.shouldSkipField(element)) {
         continue;
@@ -413,7 +403,7 @@ export class OnDemandAutofill {
     if (container.id) {
       return `container_${container.id}`;
     }
-    
+
     const className = container.className.split(' ')[0];
     if (className) {
       return `container_${className}`;
@@ -427,16 +417,21 @@ export class OnDemandAutofill {
    */
   private isMultiStepContainer(container: HTMLElement): boolean {
     const stepSelectors = [
-      '.step', '.wizard-step', '[data-step]', '.progress-step',
-      '.stepper', '.form-step', '[class*="step"]'
+      '.step',
+      '.wizard-step',
+      '[data-step]',
+      '.progress-step',
+      '.stepper',
+      '.form-step',
+      '[class*="step"]',
     ];
-    
+
     for (const selector of stepSelectors) {
       if (container.querySelectorAll(selector).length > 1) {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -445,10 +440,14 @@ export class OnDemandAutofill {
    */
   private getCurrentStepFromContainer(container: HTMLElement): number | undefined {
     const activeSelectors = [
-      '.step.active', '.wizard-step.active', '[data-step].active',
-      '.step.current', '.wizard-step.current', '[data-step].current'
+      '.step.active',
+      '.wizard-step.active',
+      '[data-step].active',
+      '.step.current',
+      '.wizard-step.current',
+      '[data-step].current',
     ];
-    
+
     for (const selector of activeSelectors) {
       const activeStep = container.querySelector(selector);
       if (activeStep) {
@@ -458,7 +457,7 @@ export class OnDemandAutofill {
         }
       }
     }
-    
+
     return undefined;
   }
 
@@ -466,17 +465,15 @@ export class OnDemandAutofill {
    * Get total steps from container
    */
   private getTotalStepsFromContainer(container: HTMLElement): number | undefined {
-    const stepSelectors = [
-      '.step', '.wizard-step', '[data-step]', '.progress-step'
-    ];
-    
+    const stepSelectors = ['.step', '.wizard-step', '[data-step]', '.progress-step'];
+
     for (const selector of stepSelectors) {
       const steps = container.querySelectorAll(selector);
       if (steps.length > 1) {
         return steps.length;
       }
     }
-    
+
     return undefined;
   }
 
@@ -494,7 +491,7 @@ export class OnDemandAutofill {
   private async analyzeForm(formElement: HTMLFormElement, platform: JobPlatform): Promise<DetectedForm | null> {
     try {
       const fields = this.extractFormFields(formElement);
-      
+
       if (fields.length === 0) {
         return null;
       }
@@ -512,9 +509,8 @@ export class OnDemandAutofill {
         detectedAt: new Date(),
         isMultiStep: this.isMultiStepForm(formElement),
         currentStep: this.getCurrentStep(formElement),
-        totalSteps: this.getTotalSteps(formElement)
+        totalSteps: this.getTotalSteps(formElement),
       };
-
     } catch (error) {
       console.error('Error analyzing form:', error);
       return null;
@@ -542,7 +538,10 @@ export class OnDemandAutofill {
   /**
    * Analyze individual form field
    */
-  private analyzeFormField(element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, index: number): FormField | null {
+  private analyzeFormField(
+    element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
+    index: number,
+  ): FormField | null {
     try {
       const type = this.getFieldType(element);
       const label = this.getFieldLabel(element);
@@ -561,9 +560,8 @@ export class OnDemandAutofill {
         placeholder: element.getAttribute('placeholder') || undefined,
         options: this.getFieldOptions(element),
         mappedProfileField: this.mapToProfileField(label, type),
-        validationRules: this.extractValidationRules(element)
+        validationRules: this.extractValidationRules(element),
       };
-
     } catch (error) {
       console.error('Error analyzing field:', error);
       return null;
@@ -577,7 +575,7 @@ export class OnDemandAutofill {
     if (element.tagName.toLowerCase() === 'textarea') {
       return 'textarea';
     }
-    
+
     if (element.tagName.toLowerCase() === 'select') {
       return 'select';
     }
@@ -585,18 +583,18 @@ export class OnDemandAutofill {
     if (element.tagName.toLowerCase() === 'input') {
       const inputElement = element as HTMLInputElement;
       const type = inputElement.type.toLowerCase();
-      
+
       const typeMap: Record<string, FieldType> = {
-        'text': 'text',
-        'email': 'email',
-        'tel': 'phone',
-        'phone': 'phone',
-        'checkbox': 'checkbox',
-        'radio': 'radio',
-        'file': 'file',
-        'date': 'date',
-        'number': 'number',
-        'url': 'url'
+        text: 'text',
+        email: 'email',
+        tel: 'phone',
+        phone: 'phone',
+        checkbox: 'checkbox',
+        radio: 'radio',
+        file: 'file',
+        date: 'date',
+        number: 'number',
+        url: 'url',
       };
 
       return typeMap[type] || 'text';
@@ -675,7 +673,9 @@ export class OnDemandAutofill {
   private getFieldOptions(element: HTMLElement): string[] | undefined {
     if (element.tagName.toLowerCase() === 'select') {
       const options = (element as HTMLSelectElement).querySelectorAll('option');
-      return Array.from(options).map(option => option.textContent?.trim() || '').filter(Boolean);
+      return Array.from(options)
+        .map(option => option.textContent?.trim() || '')
+        .filter(Boolean);
     }
 
     return undefined;
@@ -686,14 +686,16 @@ export class OnDemandAutofill {
    */
   private mapToProfileField(label: string, type: FieldType): string | undefined {
     const labelLower = label.toLowerCase();
-    const element = document.querySelector(`[aria-label*="${label}"], [placeholder*="${label}"], [name*="${label}"]`) as HTMLElement;
-    
+    const element = document.querySelector(
+      `[aria-label*="${label}"], [placeholder*="${label}"], [name*="${label}"]`,
+    ) as HTMLElement;
+
     // Get additional context from element attributes
     const name = element?.getAttribute('name')?.toLowerCase() || '';
     const id = element?.getAttribute('id')?.toLowerCase() || '';
     const placeholder = element?.getAttribute('placeholder')?.toLowerCase() || '';
     const ariaLabel = element?.getAttribute('aria-label')?.toLowerCase() || '';
-    
+
     // Combine all text sources for better matching
     const allText = `${labelLower} ${name} ${id} ${placeholder} ${ariaLabel}`.toLowerCase();
 
@@ -704,7 +706,11 @@ export class OnDemandAutofill {
     if (this.matchesPattern(allText, ['last.?name', 'family.?name', 'surname', 'lastname', 'lname'])) {
       return 'personalInfo.lastName';
     }
-    if (this.matchesPattern(allText, ['full.?name', 'name', 'applicant.?name']) && !allText.includes('first') && !allText.includes('last')) {
+    if (
+      this.matchesPattern(allText, ['full.?name', 'name', 'applicant.?name']) &&
+      !allText.includes('first') &&
+      !allText.includes('last')
+    ) {
       // If it's a single name field, map to firstName (user can enter full name)
       return 'personalInfo.firstName';
     }
@@ -788,10 +794,20 @@ export class OnDemandAutofill {
     if (this.matchesPattern(allText, ['disability', 'identify.?as.?having.?a.?disability', 'disabled'])) {
       return 'preferences.defaultAnswers.disability';
     }
-    if (this.matchesPattern(allText, ['neurodivergent', 'neurodiverse', 'consider.?yourself.?to.?be.?neurodivergent'])) {
+    if (
+      this.matchesPattern(allText, ['neurodivergent', 'neurodiverse', 'consider.?yourself.?to.?be.?neurodivergent'])
+    ) {
       return 'preferences.defaultAnswers.neurodivergent';
     }
-    if (this.matchesPattern(allText, ['ethnicity', 'ethnic', 'race', 'racial', 'how.?would.?your.?describe.?your.?ethnicity'])) {
+    if (
+      this.matchesPattern(allText, [
+        'ethnicity',
+        'ethnic',
+        'race',
+        'racial',
+        'how.?would.?your.?describe.?your.?ethnicity',
+      ])
+    ) {
       return 'preferences.defaultAnswers.ethnicity';
     }
     if (this.matchesPattern(allText, ['veteran', 'military', 'armed.?forces', 'service.?member'])) {
@@ -820,7 +836,7 @@ export class OnDemandAutofill {
     if (element.hasAttribute('required')) {
       rules.push({
         type: 'required',
-        message: 'This field is required'
+        message: 'This field is required',
       });
     }
 
@@ -829,7 +845,7 @@ export class OnDemandAutofill {
       rules.push({
         type: 'maxLength',
         value: parseInt(maxLength),
-        message: `Maximum ${maxLength} characters`
+        message: `Maximum ${maxLength} characters`,
       });
     }
 
@@ -838,7 +854,7 @@ export class OnDemandAutofill {
       rules.push({
         type: 'pattern',
         value: pattern,
-        message: 'Invalid format'
+        message: 'Invalid format',
       });
     }
 
@@ -860,22 +876,22 @@ export class OnDemandAutofill {
     const hasJobContent = jobKeywords.some(keyword => pageText.includes(keyword));
 
     // Check form fields
-    const hasPersonalFields = form.fields.some(field => 
-      field.mappedProfileField?.startsWith('personalInfo')
-    );
+    const hasPersonalFields = form.fields.some(field => field.mappedProfileField?.startsWith('personalInfo'));
 
     const hasJobRelatedFields = form.fields.some(field => {
       const label = field.label.toLowerCase();
-      return label.includes('resume') || 
-             label.includes('cv') ||
-             label.includes('cover letter') || 
-             label.includes('experience') || 
-             label.includes('salary') ||
-             label.includes('available') ||
-             label.includes('start date') ||
-             label.includes('work authorization') ||
-             label.includes('sponsorship') ||
-             label.includes('relocate');
+      return (
+        label.includes('resume') ||
+        label.includes('cv') ||
+        label.includes('cover letter') ||
+        label.includes('experience') ||
+        label.includes('salary') ||
+        label.includes('available') ||
+        label.includes('start date') ||
+        label.includes('work authorization') ||
+        label.includes('sponsorship') ||
+        label.includes('relocate')
+      );
     });
 
     // Check for file upload fields (common in job applications)
@@ -996,7 +1012,7 @@ export class OnDemandAutofill {
     if (formElement.id) {
       return formElement.id;
     }
-    
+
     const name = formElement.getAttribute('name');
     if (name) {
       return name;
@@ -1014,8 +1030,8 @@ export class OnDemandAutofill {
 
     // Sort by confidence and field count
     return forms.sort((a, b) => {
-      const scoreA = a.confidence + (a.fields.length * 0.01);
-      const scoreB = b.confidence + (b.fields.length * 0.01);
+      const scoreA = a.confidence + a.fields.length * 0.01;
+      const scoreB = b.confidence + b.fields.length * 0.01;
       return scoreB - scoreA;
     })[0];
   }
@@ -1035,38 +1051,41 @@ export class OnDemandAutofill {
 
     for (const field of form.fields) {
       try {
-        const element = document.querySelector(field.selector) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-        
+        const element = document.querySelector(field.selector) as
+          | HTMLInputElement
+          | HTMLTextAreaElement
+          | HTMLSelectElement;
+
         if (!element) {
           skippedFields.push({
             fieldId: field.id,
             selector: field.selector,
             reason: 'field_not_found',
-            message: 'Field element not found in DOM'
+            message: 'Field element not found in DOM',
           });
           continue;
         }
 
         const value = this.getFieldValue(field, this.profile);
-        
+
         if (value === null || value === undefined || value === '') {
           skippedFields.push({
             fieldId: field.id,
             selector: field.selector,
             reason: 'no_mapping',
-            message: 'No profile data available for this field'
+            message: 'No profile data available for this field',
           });
           continue;
         }
 
         const success = await this.fillFieldElement(element, field, value);
-        
+
         if (success) {
           filledFields.push({
             fieldId: field.id,
             selector: field.selector,
             value: value,
-            source: field.mappedProfileField ? 'profile' : 'default_answer'
+            source: field.mappedProfileField ? 'profile' : 'default_answer',
           });
         } else {
           errors.push({
@@ -1074,17 +1093,16 @@ export class OnDemandAutofill {
             selector: field.selector,
             code: 'fill_failed',
             message: 'Failed to fill field with value',
-            recoverable: true
+            recoverable: true,
           });
         }
-
       } catch (error) {
         errors.push({
           fieldId: field.id,
           selector: field.selector,
           code: 'unexpected_error',
           message: error instanceof Error ? error.message : 'Unknown error',
-          recoverable: false
+          recoverable: false,
         });
       }
     }
@@ -1098,7 +1116,7 @@ export class OnDemandAutofill {
       errors,
       totalFields: form.fields.length,
       filledCount: filledFields.length,
-      duration
+      duration,
     };
   }
 
@@ -1107,10 +1125,10 @@ export class OnDemandAutofill {
    */
   private getFieldValue(field: FormField, profile: UserProfile): string | null {
     const result = this.profileValidator.getProfileValue(field, profile);
-    
+
     console.log(`Getting value for field: ${field.label} -> ${field.mappedProfileField || 'unmapped'}`);
     console.log(`Value source: ${result.source}, confidence: ${result.confidence}, value: ${result.value}`);
-    
+
     if (result.alternatives && result.alternatives.length > 0) {
       console.log(`Alternative values available: ${result.alternatives.join(', ')}`);
     }
@@ -1150,11 +1168,11 @@ export class OnDemandAutofill {
 
       if (element.tagName.toLowerCase() === 'input') {
         const inputElement = element as HTMLInputElement;
-        
+
         if (inputElement.type === 'checkbox' || inputElement.type === 'radio') {
           return this.handleCheckboxRadio(inputElement, value);
         }
-        
+
         return this.fillTextElement(inputElement, value);
       }
 
@@ -1166,7 +1184,6 @@ export class OnDemandAutofill {
       }
 
       return false;
-
     } catch (error) {
       console.error('Error filling field element:', error);
       return false;
@@ -1180,13 +1197,13 @@ export class OnDemandAutofill {
     try {
       // Clear existing value
       element.value = '';
-      
+
       // Set new value
       element.value = value;
-      
+
       // Trigger events to notify the application
       this.triggerEvents(element);
-      
+
       return true;
     } catch (error) {
       console.error('Error filling text element:', error);
@@ -1201,19 +1218,19 @@ export class OnDemandAutofill {
     try {
       const lowerValue = value.toLowerCase();
       const shouldCheck = lowerValue === 'yes' || lowerValue === 'true' || lowerValue === '1';
-      
+
       if (element.type === 'checkbox') {
         element.checked = shouldCheck;
       } else if (element.type === 'radio') {
         // For radio buttons, check if this option matches the value
         const optionText = element.nextElementSibling?.textContent?.toLowerCase() || '';
         const labelText = element.closest('label')?.textContent?.toLowerCase() || '';
-        
+
         if (optionText.includes(lowerValue) || labelText.includes(lowerValue)) {
           element.checked = true;
         }
       }
-      
+
       this.triggerEvents(element);
       return true;
     } catch (error) {
@@ -1227,7 +1244,7 @@ export class OnDemandAutofill {
    */
   private triggerEvents(element: HTMLElement): void {
     const events = ['input', 'change', 'blur'];
-    
+
     events.forEach(eventType => {
       const event = new Event(eventType, { bubbles: true, cancelable: true });
       element.dispatchEvent(event);
@@ -1269,7 +1286,6 @@ export class OnDemandAutofill {
       // For now, we'll show a notification that the user needs to manually upload
       // In a future version, we could implement actual file attachment
       this.showFileUploadNotification(element, fileData);
-
     } catch (error) {
       console.error('Error handling file upload:', error);
     }
@@ -1292,27 +1308,29 @@ export class OnDemandAutofill {
 
     // Fallback to standard select handling
     const options = Array.from(element.options);
-    
+
     // Try exact match first
-    let matchedOption = options.find(option => 
-      option.value.toLowerCase() === value.toLowerCase() ||
-      option.textContent?.toLowerCase() === value.toLowerCase()
+    let matchedOption = options.find(
+      option =>
+        option.value.toLowerCase() === value.toLowerCase() || option.textContent?.toLowerCase() === value.toLowerCase(),
     );
 
     // Try partial match if exact match fails
     if (!matchedOption) {
-      matchedOption = options.find(option => 
-        option.textContent?.toLowerCase().includes(value.toLowerCase()) ||
-        value.toLowerCase().includes(option.textContent?.toLowerCase() || '')
+      matchedOption = options.find(
+        option =>
+          option.textContent?.toLowerCase().includes(value.toLowerCase()) ||
+          value.toLowerCase().includes(option.textContent?.toLowerCase() || ''),
       );
     }
 
     // Try common mappings for work authorization
     if (!matchedOption && value.toLowerCase().includes('citizen')) {
-      matchedOption = options.find(option => 
-        option.textContent?.toLowerCase().includes('citizen') ||
-        option.textContent?.toLowerCase().includes('authorized') ||
-        option.textContent?.toLowerCase().includes('yes')
+      matchedOption = options.find(
+        option =>
+          option.textContent?.toLowerCase().includes('citizen') ||
+          option.textContent?.toLowerCase().includes('authorized') ||
+          option.textContent?.toLowerCase().includes('yes'),
       );
     }
 
@@ -1392,14 +1410,14 @@ export class OnDemandAutofill {
 
     observer.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
     });
   }
 
   /**
    * Debounce utility function
    */
-  private debounce(func: Function, wait: number): void {
+  private debounce(func: () => void, wait: number): void {
     clearTimeout((this as any).debounceTimer);
     (this as any).debounceTimer = setTimeout(func, wait);
   }
@@ -1414,7 +1432,7 @@ export class OnDemandAutofill {
 
       // Analyze page for forms
       const analysis = await this.analyzeCurrentPage();
-      
+
       if (analysis.success && analysis.forms.length > 0) {
         this.detectedForms = analysis.forms;
         this.showFormIndicators(analysis);
@@ -1428,12 +1446,21 @@ export class OnDemandAutofill {
    * Clear existing form indicators
    */
   private clearFormIndicators(): void {
+    // Remove tracked indicators
     this.formIndicators.forEach(indicator => {
       if (indicator.parentNode) {
         indicator.parentNode.removeChild(indicator);
       }
     });
     this.formIndicators = [];
+
+    // Also remove any orphaned indicators that might not be tracked
+    const orphanedIndicators = document.querySelectorAll('[title*="This field will be filled from your profile"]');
+    orphanedIndicators.forEach(indicator => {
+      if (indicator.parentNode) {
+        indicator.parentNode.removeChild(indicator);
+      }
+    });
   }
 
   /**
@@ -1487,7 +1514,7 @@ export class OnDemandAutofill {
     `;
 
     const mappedFields = form.fields.filter(f => f.mappedProfileField).length;
-    
+
     indicator.innerHTML = `
       <span style="font-size: 16px;">🚀</span>
       <span style="font-weight: 500;">Autofill Ready</span>
@@ -1498,7 +1525,7 @@ export class OnDemandAutofill {
       this.handleAutofillTrigger({
         type: 'autofill:trigger',
         source: 'popup',
-        data: { tabId: 0 }
+        data: { tabId: 0 },
       });
     });
 
@@ -1509,26 +1536,20 @@ export class OnDemandAutofill {
    * Create field indicator
    */
   private createFieldIndicator(field: FormField): HTMLElement {
-          fieldId: field.id,
-          selector: field.selector,
-          code: 'FILL_ERROR',
-          message: error instanceof Error ? error.message : 'Unknown error',
-          recoverable: true
-        });
-      }
-    }
-
-    const duration = Date.now() - startTime;
-
-    return {
-      success: errors.length === 0,
-      filledFields,
-      skippedFields,
-      errors,
-      totalFields: form.fields.length,
-      filledCount: filledFields.length,
-      duration
-    };
+    const indicator = document.createElement('div');
+    indicator.style.cssText = `
+      position: absolute;
+      background: #4CAF50;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      z-index: 10000;
+      pointer-events: none;
+    `;
+    indicator.textContent = field.mappedProfileField || 'Mapped';
+    return indicator;
   }
 
   /**
@@ -1536,10 +1557,10 @@ export class OnDemandAutofill {
    */
   private getFieldValue(field: FormField, profile: UserProfile): string | boolean | null {
     const result = this.profileValidator.getProfileValue(field, profile);
-    
+
     console.log(`Getting value for field: ${field.label} -> ${field.mappedProfileField || 'unmapped'}`);
     console.log(`Value source: ${result.source}, confidence: ${result.confidence}, value: ${result.value}`);
-    
+
     if (result.alternatives && result.alternatives.length > 0) {
       console.log(`Alternative values available: ${result.alternatives.join(', ')}`);
     }
@@ -1577,12 +1598,12 @@ export class OnDemandAutofill {
     const commonMappings: Record<string, string> = {
       'cover letter': defaultAnswers.cover_letter || defaultAnswers.motivation || '',
       'why interested': defaultAnswers.why_interested || defaultAnswers.motivation || '',
-      'salary': defaultAnswers.salary_expectations || defaultAnswers.salary_range || '',
+      salary: defaultAnswers.salary_expectations || defaultAnswers.salary_range || '',
       'start date': defaultAnswers.start_date || defaultAnswers.availability || '',
-      'available': defaultAnswers.availability || defaultAnswers.start_date || '',
-      'authorization': defaultAnswers.work_authorization || defaultAnswers.visa_status || '',
-      'sponsorship': defaultAnswers.visa_sponsorship || defaultAnswers.work_authorization || '',
-      'relocate': defaultAnswers.relocation || defaultAnswers.willing_to_relocate || '',
+      available: defaultAnswers.availability || defaultAnswers.start_date || '',
+      authorization: defaultAnswers.work_authorization || defaultAnswers.visa_status || '',
+      sponsorship: defaultAnswers.visa_sponsorship || defaultAnswers.work_authorization || '',
+      relocate: defaultAnswers.relocation || defaultAnswers.willing_to_relocate || '',
     };
 
     for (const [pattern, answer] of Object.entries(commonMappings)) {
@@ -1599,12 +1620,12 @@ export class OnDemandAutofill {
    */
   private mapWorkAuthorizationValue(value: string, field: FormField): string {
     const valueLower = value.toLowerCase();
-    
+
     // Common mappings based on form options
     if (valueLower === 'citizen') {
       return 'Yes'; // For "Are you authorized to work?" questions
     }
-    
+
     if (valueLower === 'visa' || valueLower === 'work_visa') {
       return 'No'; // May need sponsorship
     }
@@ -1615,7 +1636,11 @@ export class OnDemandAutofill {
   /**
    * Fill individual field
    */
-  private async fillField(element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement, value: string | boolean, type: FieldType): Promise<void> {
+  private async fillField(
+    element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
+    value: string | boolean,
+    type: FieldType,
+  ): Promise<void> {
     // Focus the element first
     element.focus();
 
@@ -1665,7 +1690,6 @@ export class OnDemandAutofill {
       // For now, we'll show a notification that the user needs to manually upload
       // In a future version, we could implement actual file attachment
       this.showFileUploadNotification(element, fileData);
-
     } catch (error) {
       console.error('Error handling file upload:', error);
     }
@@ -1688,27 +1712,29 @@ export class OnDemandAutofill {
 
     // Fallback to standard select handling
     const options = Array.from(element.options);
-    
+
     // Try exact match first
-    let matchedOption = options.find(option => 
-      option.value.toLowerCase() === value.toLowerCase() ||
-      option.textContent?.toLowerCase() === value.toLowerCase()
+    let matchedOption = options.find(
+      option =>
+        option.value.toLowerCase() === value.toLowerCase() || option.textContent?.toLowerCase() === value.toLowerCase(),
     );
 
     // Try partial match if exact match fails
     if (!matchedOption) {
-      matchedOption = options.find(option => 
-        option.textContent?.toLowerCase().includes(value.toLowerCase()) ||
-        value.toLowerCase().includes(option.textContent?.toLowerCase() || '')
+      matchedOption = options.find(
+        option =>
+          option.textContent?.toLowerCase().includes(value.toLowerCase()) ||
+          value.toLowerCase().includes(option.textContent?.toLowerCase() || ''),
       );
     }
 
     // Try common mappings for work authorization
     if (!matchedOption && value.toLowerCase().includes('citizen')) {
-      matchedOption = options.find(option => 
-        option.textContent?.toLowerCase().includes('citizen') ||
-        option.textContent?.toLowerCase().includes('authorized') ||
-        option.textContent?.toLowerCase().includes('yes')
+      matchedOption = options.find(
+        option =>
+          option.textContent?.toLowerCase().includes('citizen') ||
+          option.textContent?.toLowerCase().includes('authorized') ||
+          option.textContent?.toLowerCase().includes('yes'),
       );
     }
 
@@ -1788,7 +1814,7 @@ export class OnDemandAutofill {
 
     observer.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
     });
   }
 
@@ -1802,7 +1828,7 @@ export class OnDemandAutofill {
 
       // Analyze page for forms
       const analysis = await this.analyzeCurrentPage();
-      
+
       if (analysis.success && analysis.forms.length > 0) {
         this.detectedForms = analysis.forms;
         this.showFormIndicators(analysis);
@@ -1863,7 +1889,7 @@ export class OnDemandAutofill {
     `;
 
     const mappedFields = form.fields.filter(f => f.mappedProfileField).length;
-    
+
     indicator.innerHTML = `
       <span style="font-size: 16px;">🚀</span>
       <div>
@@ -1890,7 +1916,7 @@ export class OnDemandAutofill {
       this.handleAutofillTrigger({
         type: 'autofill:trigger',
         source: 'popup',
-        data: { tabId: 0 }
+        data: { tabId: 0 },
       });
     });
 
@@ -1946,7 +1972,7 @@ export class OnDemandAutofill {
   /**
    * Debounce utility function
    */
-  private debounce(func: Function, wait: number): void {
+  private debounce(func: () => void, wait: number): void {
     let timeout: NodeJS.Timeout;
     clearTimeout(timeout);
     timeout = setTimeout(() => func(), wait);
@@ -1975,7 +2001,7 @@ export class OnDemandAutofill {
 
     const icon = result.success ? '✅' : '⚠️';
     const title = result.success ? 'Autofill Complete!' : 'Autofill Partial';
-    
+
     notification.innerHTML = `
       <div style="font-weight: bold; margin-bottom: 8px;">
         ${icon} ${title}
@@ -2013,6 +2039,13 @@ export class OnDemandAutofill {
         style.parentNode.removeChild(style);
       }
     }, 5000);
+  }
+
+  /**
+   * Check if an autofill indicator already exists for a field element
+   */
+  private hasExistingIndicator(fieldElement: Element): boolean {
+    return !!fieldElement.parentNode?.querySelector('[title*="This field will be filled from your profile"]');
   }
 }
 

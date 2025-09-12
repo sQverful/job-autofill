@@ -41,5 +41,47 @@
   },
   "displayErrorReset": {
     "message": "Run Again"
+  },
+  "privacySecurityTitle": {
+    "message": "Privacy & Security"
+  },
+  "dataStorageTitle": {
+    "message": "Data Storage"
+  },
+  "permissionsTitle": {
+    "message": "Permissions"
+  },
+  "securityFeaturesTitle": {
+    "message": "Security Features"
+  },
+  "securityWarningsTitle": {
+    "message": "Security Warnings"
+  },
+  "privacyActionsTitle": {
+    "message": "Privacy Actions"
+  },
+  "dataStoredLocally": {
+    "message": "All data stored locally on your device"
+  },
+  "noExternalServers": {
+    "message": "No data sent to external servers"
+  },
+  "refreshStatus": {
+    "message": "Refresh Status"
+  },
+  "clearAllData": {
+    "message": "Clear All Data"
+  },
+  "showDetails": {
+    "message": "Show Details"
+  },
+  "hideDetails": {
+    "message": "Hide Details"
+  },
+  "noSecurityIssues": {
+    "message": "No Security Issues Detected"
+  },
+  "extensionSecure": {
+    "message": "Your extension is properly configured and secure"
   }
 }

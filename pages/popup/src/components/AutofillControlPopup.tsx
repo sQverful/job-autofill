@@ -3,7 +3,7 @@ import { cn, Button, LoadingSpinner } from '@extension/ui';
 import { useStorage } from '@extension/shared';
 import { exampleThemeStorage, profileStorage } from '@extension/storage';
 import type { UserProfile } from '@extension/shared';
-import { ProfileForm, ProfileView, SettingsView } from './index';
+import { ProfileForm, ProfileView, SettingsView, PrivacySecurityIndicator } from './index';
 
 interface PopupState {
   currentTab: chrome.tabs.Tab | null;
@@ -12,7 +12,7 @@ interface PopupState {
   autofillStatus: 'idle' | 'analyzing' | 'filling' | 'complete' | 'error';
   error: string | null;
   lastResult: AutofillResult | null;
-  activeTab: 'autofill' | 'profile' | 'settings';
+  activeTab: 'autofill' | 'profile' | 'settings' | 'privacy';
   showEditForm: boolean;
   saveStatus: 'idle' | 'saving' | 'success' | 'error';
 }
@@ -341,6 +341,22 @@ export const AutofillControlPopup: React.FC = () => {
           )}>
           Settings
         </button>
+        <button
+          onClick={() => setState(prev => ({ ...prev, activeTab: 'privacy' }))}
+          role="tab"
+          aria-selected={state.activeTab === 'privacy'}
+          aria-controls="privacy-panel"
+          id="privacy-tab"
+          className={cn(
+            'flex-1 px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500',
+            state.activeTab === 'privacy'
+              ? 'border-b-2 border-blue-600 text-blue-600'
+              : isLight
+                ? 'text-gray-600 hover:text-gray-800'
+                : 'text-gray-400 hover:text-gray-200',
+          )}>
+          Privacy
+        </button>
       </div>
 
       {/* Content - Scrollable Area */}
@@ -362,6 +378,9 @@ export const AutofillControlPopup: React.FC = () => {
             aria-labelledby="settings-tab"
             hidden={state.activeTab !== 'settings'}>
             {state.activeTab === 'settings' && renderSettingsTab()}
+          </div>
+          <div role="tabpanel" id="privacy-panel" aria-labelledby="privacy-tab" hidden={state.activeTab !== 'privacy'}>
+            {state.activeTab === 'privacy' && renderPrivacyTab()}
           </div>
         </div>
       </div>
@@ -502,5 +521,9 @@ export const AutofillControlPopup: React.FC = () => {
 
   function renderSettingsTab() {
     return <SettingsView onImport={handleProfileImport} />;
+  }
+
+  function renderPrivacyTab() {
+    return <PrivacySecurityIndicator />;
   }
 };
