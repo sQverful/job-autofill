@@ -1142,8 +1142,8 @@ export class OnDemandAutofill {
   private async fillFieldElement(element: HTMLElement, field: FormField, value: string): Promise<boolean> {
     try {
       if (field.type === 'file') {
-        await this.handleFileUpload(element as HTMLInputElement, field);
-        return true;
+        console.log(`Skipping file upload field: ${field.label} to prevent DOM mutations`);
+        return false; // Skip file upload fields completely
       }
 
       if (element.tagName.toLowerCase() === 'select') {
@@ -1484,7 +1484,7 @@ export class OnDemandAutofill {
         const fieldElement = document.querySelector(field.selector);
         if (fieldElement) {
           const fieldIndicator = this.createFieldIndicator(field);
-          fieldElement.parentNode?.insertBefore(fieldIndicator, fieldElement.nextSibling);
+          this.positionFieldIndicator(fieldIndicator, fieldElement);
           this.formIndicators.push(fieldIndicator);
         }
       }
@@ -1536,22 +1536,64 @@ export class OnDemandAutofill {
   }
 
   /**
+   * Position field indicator appropriately based on field type
+   */
+  private positionFieldIndicator(indicator: HTMLElement, fieldElement: Element): void {
+    const fieldType = (fieldElement as HTMLInputElement).type;
+
+    // For checkboxes and radio buttons, position the indicator outside the clickable area
+    if (fieldType === 'checkbox' || fieldType === 'radio') {
+      // Find the label or wrapper container
+      const label =
+        fieldElement.closest('label') ||
+        fieldElement.parentElement?.querySelector('label') ||
+        document.querySelector(`label[for="${fieldElement.id}"]`);
+
+      if (label) {
+        // Position after the label to avoid interfering with clicks
+        label.parentNode?.insertBefore(indicator, label.nextSibling);
+      } else {
+        // Find a suitable container that won't interfere with clicking
+        const wrapper =
+          fieldElement.closest('.checkbox__wrapper, .radio__wrapper, .form-group, .field-wrapper') ||
+          fieldElement.parentElement;
+        if (wrapper) {
+          wrapper.appendChild(indicator);
+        }
+      }
+    } else {
+      // For other field types, use the original positioning
+      fieldElement.parentNode?.insertBefore(indicator, fieldElement.nextSibling);
+    }
+  }
+
+  /**
    * Create field indicator
    */
   private createFieldIndicator(field: FormField): HTMLElement {
     const indicator = document.createElement('div');
+
+    // Make the indicator smaller and less intrusive for checkboxes and radio buttons
+    const isCheckboxOrRadio = field.type === 'checkbox' || field.type === 'radio';
+
     indicator.style.cssText = `
-      position: absolute;
+      display: inline-block;
       background: #4CAF50;
       color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: ${isCheckboxOrRadio ? '1px 4px' : '2px 6px'};
+      border-radius: 3px;
+      font-size: ${isCheckboxOrRadio ? '8px' : '10px'};
       font-weight: 500;
-      z-index: 10000;
+      margin-left: ${isCheckboxOrRadio ? '4px' : '8px'};
+      vertical-align: middle;
+      opacity: 0.7;
       pointer-events: none;
+      z-index: 1000;
+      ${isCheckboxOrRadio ? 'position: relative; top: -1px;' : ''}
     `;
-    indicator.textContent = field.mappedProfileField || 'Mapped';
+    indicator.textContent = '✓ Auto-fillable';
+    indicator.title = `This field will be filled from your profile: ${field.mappedProfileField}`;
+
     return indicator;
   }
 

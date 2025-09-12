@@ -1072,9 +1072,10 @@ export class EnhancedAutofill {
           continue;
         }
 
-        // Handle file fields differently
+        // Skip file fields completely to prevent DOM mutations
         if (field.type === 'file') {
-          const success = await this.fillFieldElement(element, field, ''); // Pass empty string for file fields
+          console.log(`Skipping file upload field: ${field.label} to prevent DOM mutations`);
+          continue; // Skip to next field
 
           if (success) {
             filledFields.push({
@@ -1295,7 +1296,8 @@ export class EnhancedAutofill {
   private async directInputStrategy(element: HTMLElement, field: FormField, value: string): Promise<boolean> {
     try {
       if (field.type === 'file') {
-        return await this.handleFileUpload(element as HTMLInputElement, field);
+        console.log(`Skipping file upload field: ${field.label} to prevent DOM mutations`);
+        return false; // Skip file upload fields completely
       }
 
       if (element.tagName.toLowerCase() === 'select' || this.isReactSelectComponent(element)) {
@@ -1989,36 +1991,8 @@ export class EnhancedAutofill {
 
       // Find the best matching option using scoring system
       const bestMatch = this.findBestMatchingOption(value, allOptions);
+      let foundOption = false;
 
-      if (bestMatch && bestMatch.score > 30) {
-        const optionText = bestMatch.element.textContent?.trim() || '';
-        console.log(`Best match found: "${optionText}" (score: ${bestMatch.score})`);
-
-        // Try multiple click strategies for better compatibility
-        await this.triggerComprehensiveClick(bestMatch.element);
-        await this.delay(200);
-
-        let foundOption = false;
-
-        // Verify the selection worked
-        const selectionWorked = await this.verifyOptionSelection(control, bestMatch.element, optionText);
-
-        if (selectionWorked) {
-          console.log(`Selection verified: ${optionText}`);
-          foundOption = true;
-        } else {
-          console.log(`Selection verification failed, trying fallback approach`);
-          // Try alternative selection method
-          foundOption = await this.fallbackOptionSelection(control, bestMatch.element, value);
-        }
-      } else {
-        console.log(`No suitable option found. Best score: ${bestMatch?.score || 0}`);
-        // Log available options for debugging
-        allOptions.slice(0, 5).forEach(opt => {
-          const score = this.calculateOptionMatchScore(value, opt.text, opt.value);
-          console.log(`  Option: "${opt.text}" (score: ${score})`);
-        });
-      }
       if (bestMatch && bestMatch.score > 30) {
         const optionText = bestMatch.element.textContent?.trim() || '';
         console.log(`Best match found: "${optionText}" (score: ${bestMatch.score})`);
@@ -3436,12 +3410,44 @@ export class EnhancedAutofill {
           );
           if (!existingIndicator) {
             const fieldIndicator = this.createFieldIndicator(field);
-            fieldElement.parentNode?.insertBefore(fieldIndicator, fieldElement.nextSibling);
+            this.positionFieldIndicator(fieldIndicator, fieldElement);
             this.formIndicators.push(fieldIndicator);
           }
         }
       }
     });
+  }
+
+  /**
+   * Position field indicator appropriately based on field type
+   */
+  private positionFieldIndicator(indicator: HTMLElement, fieldElement: Element): void {
+    const fieldType = (fieldElement as HTMLInputElement).type;
+
+    // For checkboxes and radio buttons, position the indicator outside the clickable area
+    if (fieldType === 'checkbox' || fieldType === 'radio') {
+      // Find the label or wrapper container
+      const label =
+        fieldElement.closest('label') ||
+        fieldElement.parentElement?.querySelector('label') ||
+        document.querySelector(`label[for="${fieldElement.id}"]`);
+
+      if (label) {
+        // Position after the label to avoid interfering with clicks
+        label.parentNode?.insertBefore(indicator, label.nextSibling);
+      } else {
+        // Find a suitable container that won't interfere with clicking
+        const wrapper =
+          fieldElement.closest('.checkbox__wrapper, .radio__wrapper, .form-group, .field-wrapper') ||
+          fieldElement.parentElement;
+        if (wrapper) {
+          wrapper.appendChild(indicator);
+        }
+      }
+    } else {
+      // For other field types, use the original positioning
+      fieldElement.parentNode?.insertBefore(indicator, fieldElement.nextSibling);
+    }
   }
 
   /**
@@ -3837,17 +3843,24 @@ export class EnhancedAutofill {
    */
   private createFieldIndicator(field: FormField): HTMLElement {
     const indicator = document.createElement('div');
+
+    // Make the indicator smaller and less intrusive for checkboxes and radio buttons
+    const isCheckboxOrRadio = field.type === 'checkbox' || field.type === 'radio';
+
     indicator.style.cssText = `
       display: inline-block;
       background: #4CAF50;
       color: white;
-      padding: 2px 6px;
+      padding: ${isCheckboxOrRadio ? '1px 4px' : '2px 6px'};
       border-radius: 3px;
-      font-size: 10px;
+      font-size: ${isCheckboxOrRadio ? '8px' : '10px'};
       font-weight: 500;
-      margin-left: 8px;
+      margin-left: ${isCheckboxOrRadio ? '4px' : '8px'};
       vertical-align: middle;
-      opacity: 0.8;
+      opacity: 0.7;
+      pointer-events: none;
+      z-index: 1000;
+      ${isCheckboxOrRadio ? 'position: relative; top: -1px;' : ''}
     `;
     indicator.textContent = '✓ Auto-fillable';
     indicator.title = `This field will be filled from your profile: ${field.mappedProfileField}`;
