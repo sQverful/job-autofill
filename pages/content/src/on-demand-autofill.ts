@@ -1283,9 +1283,12 @@ export class OnDemandAutofill {
         return;
       }
 
-      // For now, we'll show a notification that the user needs to manually upload
-      // In a future version, we could implement actual file attachment
-      this.showFileUploadNotification(element, fileData);
+      console.log(`File upload field detected: ${field.label}. Skipping autofill to preserve upload buttons.`);
+
+      // Don't actually interact with file upload fields to avoid triggering
+      // website's upload state changes that remove the upload buttons
+      // Just show a notification that the user needs to upload manually
+      this.showFileUploadGuidanceNew(element, fileData);
     } catch (error) {
       console.error('Error handling file upload:', error);
     }
@@ -1553,432 +1556,6 @@ export class OnDemandAutofill {
   }
 
   /**
-   * Get value for field from profile using enhanced validation and intelligent defaults
-   */
-  private getFieldValue(field: FormField, profile: UserProfile): string | boolean | null {
-    const result = this.profileValidator.getProfileValue(field, profile);
-
-    console.log(`Getting value for field: ${field.label} -> ${field.mappedProfileField || 'unmapped'}`);
-    console.log(`Value source: ${result.source}, confidence: ${result.confidence}, value: ${result.value}`);
-
-    if (result.alternatives && result.alternatives.length > 0) {
-      console.log(`Alternative values available: ${result.alternatives.join(', ')}`);
-    }
-
-    // Handle special cases
-    if (field.type === 'file') {
-      return field.mappedProfileField; // Return the mapping for file handling
-    }
-
-    // Convert to appropriate type for checkbox fields
-    if (field.type === 'checkbox') {
-      if (result.value === null) return null;
-      const stringValue = result.value.toLowerCase();
-      return stringValue === 'yes' || stringValue === 'true' || stringValue === '1';
-    }
-
-    return result.value;
-  }
-
-  /**
-   * Get value from default answers
-   */
-  private getDefaultAnswerValue(field: FormField, profile: UserProfile): string | null {
-    const label = field.label.toLowerCase();
-    const defaultAnswers = profile.preferences.defaultAnswers;
-
-    // Try to find matching default answer
-    for (const [key, answer] of Object.entries(defaultAnswers)) {
-      if (label.includes(key.replace(/_/g, ' ')) || key.replace(/_/g, ' ').includes(label)) {
-        return answer;
-      }
-    }
-
-    // Try common question patterns
-    const commonMappings: Record<string, string> = {
-      'cover letter': defaultAnswers.cover_letter || defaultAnswers.motivation || '',
-      'why interested': defaultAnswers.why_interested || defaultAnswers.motivation || '',
-      salary: defaultAnswers.salary_expectations || defaultAnswers.salary_range || '',
-      'start date': defaultAnswers.start_date || defaultAnswers.availability || '',
-      available: defaultAnswers.availability || defaultAnswers.start_date || '',
-      authorization: defaultAnswers.work_authorization || defaultAnswers.visa_status || '',
-      sponsorship: defaultAnswers.visa_sponsorship || defaultAnswers.work_authorization || '',
-      relocate: defaultAnswers.relocation || defaultAnswers.willing_to_relocate || '',
-    };
-
-    for (const [pattern, answer] of Object.entries(commonMappings)) {
-      if (label.includes(pattern) && answer) {
-        return answer;
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Map work authorization values to common form options
-   */
-  private mapWorkAuthorizationValue(value: string, field: FormField): string {
-    const valueLower = value.toLowerCase();
-
-    // Common mappings based on form options
-    if (valueLower === 'citizen') {
-      return 'Yes'; // For "Are you authorized to work?" questions
-    }
-
-    if (valueLower === 'visa' || valueLower === 'work_visa') {
-      return 'No'; // May need sponsorship
-    }
-
-    return value;
-  }
-
-  /**
-   * Fill individual field
-   */
-  private async fillField(
-    element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
-    value: string | boolean,
-    type: FieldType,
-  ): Promise<void> {
-    // Focus the element first
-    element.focus();
-
-    if (type === 'file') {
-      await this.handleFileUpload(element as HTMLInputElement, value as string);
-    } else if (type === 'checkbox') {
-      (element as HTMLInputElement).checked = Boolean(value);
-    } else if (type === 'select') {
-      await this.handleSelectField(element as HTMLSelectElement, String(value));
-    } else {
-      element.value = String(value);
-    }
-
-    // Trigger events to ensure the form recognizes the change
-    element.dispatchEvent(new Event('input', { bubbles: true }));
-    element.dispatchEvent(new Event('change', { bubbles: true }));
-    element.dispatchEvent(new Event('blur', { bubbles: true }));
-
-    // Small delay to allow for any async validation
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-
-  /**
-   * Handle file upload fields
-   */
-  private async handleFileUpload(element: HTMLInputElement, mappedField: string): Promise<void> {
-    if (!this.profile) return;
-
-    try {
-      let fileData: any = null;
-
-      // Get file data based on mapped field
-      if (mappedField === 'documents.resumes' && this.profile.documents.resumes.length > 0) {
-        // Use the default resume or first available
-        const resume = this.profile.documents.resumes.find(r => r.isDefault) || this.profile.documents.resumes[0];
-        fileData = resume;
-      } else if (mappedField === 'documents.coverLetters' && this.profile.documents.coverLetters.length > 0) {
-        const coverLetter = this.profile.documents.coverLetters[0];
-        fileData = coverLetter;
-      }
-
-      if (!fileData) {
-        console.log('No file data available for upload field');
-        return;
-      }
-
-      // For now, we'll show a notification that the user needs to manually upload
-      // In a future version, we could implement actual file attachment
-      this.showFileUploadNotification(element, fileData);
-    } catch (error) {
-      console.error('Error handling file upload:', error);
-    }
-  }
-
-  /**
-   * Handle select field with smart matching and intelligent component support
-   */
-  private async handleSelectField(element: HTMLSelectElement, value: string): Promise<void> {
-    // First try intelligent component handler in case this is a custom select
-    try {
-      const success = await this.componentHandler.fillComponent(element, value);
-      if (success) {
-        console.log('Select field filled using intelligent component handler');
-        return;
-      }
-    } catch (error) {
-      console.warn('Intelligent component handler failed for select, using fallback:', error);
-    }
-
-    // Fallback to standard select handling
-    const options = Array.from(element.options);
-
-    // Try exact match first
-    let matchedOption = options.find(
-      option =>
-        option.value.toLowerCase() === value.toLowerCase() || option.textContent?.toLowerCase() === value.toLowerCase(),
-    );
-
-    // Try partial match if exact match fails
-    if (!matchedOption) {
-      matchedOption = options.find(
-        option =>
-          option.textContent?.toLowerCase().includes(value.toLowerCase()) ||
-          value.toLowerCase().includes(option.textContent?.toLowerCase() || ''),
-      );
-    }
-
-    // Try common mappings for work authorization
-    if (!matchedOption && value.toLowerCase().includes('citizen')) {
-      matchedOption = options.find(
-        option =>
-          option.textContent?.toLowerCase().includes('citizen') ||
-          option.textContent?.toLowerCase().includes('authorized') ||
-          option.textContent?.toLowerCase().includes('yes'),
-      );
-    }
-
-    if (matchedOption) {
-      element.value = matchedOption.value;
-      this.triggerEvents(element);
-    } else {
-      console.log(`No matching option found for value: ${value}`);
-    }
-  }
-
-  /**
-   * Show notification for file upload fields
-   */
-  private showFileUploadNotification(element: HTMLInputElement, fileData: any): void {
-    // Create a visual indicator near the file input
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-      position: absolute;
-      background: #4CAF50;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 12px;
-      z-index: 10000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      max-width: 200px;
-    `;
-    notification.textContent = `📎 Ready to upload: ${fileData.name || fileData.fileName}`;
-
-    // Position near the file input
-    const rect = element.getBoundingClientRect();
-    notification.style.top = `${rect.bottom + window.scrollY + 5}px`;
-    notification.style.left = `${rect.left + window.scrollX}px`;
-
-    document.body.appendChild(notification);
-
-    // Remove notification after 5 seconds
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification);
-      }
-    }, 5000);
-
-    // Add click handler to file input to show file info
-    element.addEventListener('click', () => {
-      console.log('File upload field clicked. Available file:', fileData);
-    });
-  }
-
-  /**
-   * Send notification to background/popup
-   */
-  private sendNotification(message: any): void {
-    try {
-      chrome.runtime.sendMessage(message);
-    } catch (error) {
-      console.error('Failed to send notification:', error);
-    }
-  }
-
-  /**
-   * Initialize form detection and visual indicators
-   */
-  private async initializeFormDetection(): Promise<void> {
-    // Wait for page to load
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => this.detectAndIndicateForms());
-    } else {
-      this.detectAndIndicateForms();
-    }
-
-    // Re-detect forms when page content changes (for SPAs)
-    const observer = new MutationObserver(() => {
-      this.debounce(() => this.detectAndIndicateForms(), 1000);
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-  }
-
-  /**
-   * Detect forms and show visual indicators
-   */
-  private async detectAndIndicateForms(): Promise<void> {
-    try {
-      // Clear existing indicators
-      this.clearFormIndicators();
-
-      // Analyze page for forms
-      const analysis = await this.analyzeCurrentPage();
-
-      if (analysis.success && analysis.forms.length > 0) {
-        this.detectedForms = analysis.forms;
-        this.showFormIndicators(analysis);
-      }
-    } catch (error) {
-      console.error('Error detecting forms:', error);
-    }
-  }
-
-  /**
-   * Show visual indicators for detected forms
-   */
-  private showFormIndicators(analysis: FormAnalysisResult): void {
-    const bestForm = this.selectBestForm(analysis.forms);
-    if (!bestForm) return;
-
-    // Create main autofill indicator
-    const indicator = this.createAutofillIndicator(analysis.platform, bestForm);
-    document.body.appendChild(indicator);
-    this.formIndicators.push(indicator);
-
-    // Add field-level indicators for mapped fields
-    bestForm.fields.forEach(field => {
-      if (field.mappedProfileField) {
-        const fieldElement = document.querySelector(field.selector);
-        if (fieldElement) {
-          const fieldIndicator = this.createFieldIndicator(field);
-          fieldElement.parentNode?.insertBefore(fieldIndicator, fieldElement.nextSibling);
-          this.formIndicators.push(fieldIndicator);
-        }
-      }
-    });
-  }
-
-  /**
-   * Create main autofill availability indicator
-   */
-  private createAutofillIndicator(platform: string, form: DetectedForm): HTMLElement {
-    const indicator = document.createElement('div');
-    indicator.style.cssText = `
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 12px 16px;
-      border-radius: 25px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-      z-index: 9999;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    `;
-
-    const mappedFields = form.fields.filter(f => f.mappedProfileField).length;
-
-    indicator.innerHTML = `
-      <span style="font-size: 16px;">🚀</span>
-      <div>
-        <div style="font-weight: 600;">Autofill Available</div>
-        <div style="font-size: 11px; opacity: 0.9;">
-          ${mappedFields} fields ready • ${platform}
-        </div>
-      </div>
-    `;
-
-    // Add hover effects
-    indicator.addEventListener('mouseenter', () => {
-      indicator.style.transform = 'scale(1.05)';
-      indicator.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
-    });
-
-    indicator.addEventListener('mouseleave', () => {
-      indicator.style.transform = 'scale(1)';
-      indicator.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
-    });
-
-    // Add click handler to trigger autofill
-    indicator.addEventListener('click', () => {
-      this.handleAutofillTrigger({
-        type: 'autofill:trigger',
-        source: 'popup',
-        data: { tabId: 0 },
-      });
-    });
-
-    return indicator;
-  }
-
-  /**
-   * Create field-level indicator
-   */
-  private createFieldIndicator(field: FormField): HTMLElement {
-    const indicator = document.createElement('div');
-    indicator.style.cssText = `
-      display: inline-block;
-      background: #4CAF50;
-      color: white;
-      padding: 2px 6px;
-      border-radius: 10px;
-      font-size: 10px;
-      font-weight: 500;
-      margin-left: 8px;
-      vertical-align: middle;
-      opacity: 0.8;
-      transition: opacity 0.2s ease;
-    `;
-
-    indicator.textContent = '✓ Auto';
-    indicator.title = `This field will be filled automatically from your profile: ${field.mappedProfileField}`;
-
-    // Add hover effect
-    indicator.addEventListener('mouseenter', () => {
-      indicator.style.opacity = '1';
-    });
-
-    indicator.addEventListener('mouseleave', () => {
-      indicator.style.opacity = '0.8';
-    });
-
-    return indicator;
-  }
-
-  /**
-   * Clear existing form indicators
-   */
-  private clearFormIndicators(): void {
-    this.formIndicators.forEach(indicator => {
-      if (indicator.parentNode) {
-        indicator.parentNode.removeChild(indicator);
-      }
-    });
-    this.formIndicators = [];
-  }
-
-  /**
-   * Debounce utility function
-   */
-  private debounce(func: () => void, wait: number): void {
-    let timeout: NodeJS.Timeout;
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(), wait);
-  }
-
-  /**
    * Show visual feedback on the page after autofill
    */
   private showAutofillFeedback(result: AutofillResult, platform: string): void {
@@ -2046,6 +1623,65 @@ export class OnDemandAutofill {
    */
   private hasExistingIndicator(fieldElement: Element): boolean {
     return !!fieldElement.parentNode?.querySelector('[title*="This field will be filled from your profile"]');
+  }
+
+  /**
+   * Show guidance for file upload fields (new method)
+   */
+  private showFileUploadGuidanceNew(element: HTMLInputElement, fileData: any): void {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: absolute;
+      background: #2196F3;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      max-width: 280px;
+      line-height: 1.4;
+      cursor: pointer;
+    `;
+    notification.innerHTML = `
+      <div style="font-weight: 600; margin-bottom: 4px;">📎 File Upload Required</div>
+      <div style="font-size: 12px; opacity: 0.9;">
+        Please manually upload: <strong>${fileData.name || fileData.fileName}</strong>
+      </div>
+      <div style="font-size: 11px; margin-top: 4px; opacity: 0.8;">
+        Click here to dismiss
+      </div>
+    `;
+
+    // Position near the file input
+    const rect = element.getBoundingClientRect();
+    notification.style.top = `${rect.bottom + window.scrollY + 8}px`;
+    notification.style.left = `${rect.left + window.scrollX}px`;
+
+    document.body.appendChild(notification);
+
+    // Remove on click or after timeout
+    const removeNotification = () => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    };
+
+    notification.addEventListener('click', removeNotification);
+
+    setTimeout(removeNotification, 8000);
+
+    // Add a subtle highlight to the file input to draw attention
+    const originalBorder = element.style.border;
+    const originalBoxShadow = element.style.boxShadow;
+
+    element.style.border = '2px solid #2196F3';
+    element.style.boxShadow = '0 0 8px rgba(33, 150, 243, 0.3)';
+
+    setTimeout(() => {
+      element.style.border = originalBorder;
+      element.style.boxShadow = originalBoxShadow;
+    }, 3000);
   }
 }
 

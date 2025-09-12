@@ -43,7 +43,7 @@ export class UniversalComponentHandler {
       new VueSelectHandler(),
       new AngularMaterialHandler(),
       new CustomDropdownHandler(),
-      new StandardInputHandler()
+      new StandardInputHandler(),
     ];
   }
 
@@ -58,7 +58,7 @@ export class UniversalComponentHandler {
           element,
           confidence: this.calculateConfidence(handler, element),
           interactionMethod: this.getInteractionMethod(handler),
-          metadata: await this.getComponentMetadata(handler, element)
+          metadata: await this.getComponentMetadata(handler, element),
         };
       }
     }
@@ -139,12 +139,11 @@ export class UniversalComponentHandler {
       'react-select__input',
       'react-select__value-container',
       'Select-control',
-      'select__control'
+      'select__control',
     ];
 
     for (const className of reactSelectClasses) {
-      if (element.classList.contains(className) || 
-          element.querySelector(`.${className}`)) {
+      if (element.classList.contains(className) || element.querySelector(`.${className}`)) {
         score += 0.3;
       }
     }
@@ -206,7 +205,7 @@ export class UniversalComponentHandler {
     // Check for custom dropdown patterns
     const customPatterns = ['dropdown', 'select', 'picker', 'chooser'];
     const className = element.className.toLowerCase();
-    
+
     for (const pattern of customPatterns) {
       if (className.includes(pattern)) {
         score += 0.2;
@@ -229,9 +228,12 @@ export class UniversalComponentHandler {
     return 'type';
   }
 
-  private async getComponentMetadata(handler: ComponentHandler, element: HTMLElement): Promise<ComponentDetectionResult['metadata']> {
+  private async getComponentMetadata(
+    handler: ComponentHandler,
+    element: HTMLElement,
+  ): Promise<ComponentDetectionResult['metadata']> {
     const metadata: ComponentDetectionResult['metadata'] = {
-      framework: 'unknown'
+      framework: 'unknown',
     };
 
     if (handler instanceof ReactSelectHandler) {
@@ -269,14 +271,16 @@ export class UniversalComponentHandler {
   }
 
   private getHandlerByType(type: ComponentDetectionResult['type']): ComponentHandler | null {
-    return this.handlers.find(handler => {
-      if (type === 'react-select' && handler instanceof ReactSelectHandler) return true;
-      if (type === 'vue-select' && handler instanceof VueSelectHandler) return true;
-      if (type === 'angular-material' && handler instanceof AngularMaterialHandler) return true;
-      if (type === 'custom' && handler instanceof CustomDropdownHandler) return true;
-      if (type === 'standard' && handler instanceof StandardInputHandler) return true;
-      return false;
-    }) || null;
+    return (
+      this.handlers.find(handler => {
+        if (type === 'react-select' && handler instanceof ReactSelectHandler) return true;
+        if (type === 'vue-select' && handler instanceof VueSelectHandler) return true;
+        if (type === 'angular-material' && handler instanceof AngularMaterialHandler) return true;
+        if (type === 'custom' && handler instanceof CustomDropdownHandler) return true;
+        if (type === 'standard' && handler instanceof StandardInputHandler) return true;
+        return false;
+      }) || null
+    );
   }
 }
 
@@ -293,7 +297,7 @@ export class ReactSelectHandler implements ComponentHandler {
       '[class*="react-select"]',
       '[class*="Select-control"]',
       '.select__control',
-      '.select-shell'
+      '.select-shell',
     ];
 
     for (const pattern of reactSelectPatterns) {
@@ -318,7 +322,7 @@ export class ReactSelectHandler implements ComponentHandler {
         () => this.fillByDirectInput(element, value),
         () => this.fillByClickAndType(element, value),
         () => this.fillBySimulateEvents(element, value),
-        () => this.fillByReactProps(element, value)
+        () => this.fillByReactProps(element, value),
       ];
 
       for (const strategy of strategies) {
@@ -345,17 +349,17 @@ export class ReactSelectHandler implements ComponentHandler {
     // Focus and clear existing value
     input.focus();
     input.value = '';
-    
+
     // Type the value
     input.value = value;
-    
+
     // Trigger events
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
-    
+
     // Wait for dropdown to appear
     await this.waitForDropdown(element);
-    
+
     // Try to select matching option
     return await this.selectMatchingOption(element, value);
   }
@@ -373,7 +377,7 @@ export class ReactSelectHandler implements ComponentHandler {
     if (!input) return false;
 
     input.focus();
-    
+
     // Clear and type value
     input.value = '';
     for (const char of value) {
@@ -394,11 +398,11 @@ export class ReactSelectHandler implements ComponentHandler {
     // Simulate user interaction
     input.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     input.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
-    
+
     // Clear existing value
     input.value = '';
     input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
-    
+
     // Type new value
     for (const char of value) {
       input.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }));
@@ -408,7 +412,7 @@ export class ReactSelectHandler implements ComponentHandler {
     }
 
     input.dispatchEvent(new KeyboardEvent('keyup', { key: value[value.length - 1], bubbles: true }));
-    
+
     await this.waitForOptions(element);
     return await this.selectMatchingOption(element, value);
   }
@@ -425,11 +429,12 @@ export class ReactSelectHandler implements ComponentHandler {
       if (selectInstance && selectInstance.selectOption) {
         // Try to find option by value
         const options = selectInstance.props?.options || [];
-        const matchingOption = options.find((opt: any) => 
-          opt.label?.toLowerCase().includes(value.toLowerCase()) ||
-          opt.value?.toLowerCase().includes(value.toLowerCase())
+        const matchingOption = options.find(
+          (opt: any) =>
+            opt.label?.toLowerCase().includes(value.toLowerCase()) ||
+            opt.value?.toLowerCase().includes(value.toLowerCase()),
         );
-        
+
         if (matchingOption) {
           selectInstance.selectOption(matchingOption);
           return true;
@@ -448,7 +453,7 @@ export class ReactSelectHandler implements ComponentHandler {
       '.react-select__input input',
       '.Select-input input',
       '.select__input input',
-      'input[class*="input"]'
+      'input[class*="input"]',
     ];
 
     for (const selector of selectors) {
@@ -461,57 +466,45 @@ export class ReactSelectHandler implements ComponentHandler {
 
   private async waitForDropdown(element: HTMLElement, timeout = 1000): Promise<boolean> {
     const start = Date.now();
-    
+
     while (Date.now() - start < timeout) {
-      const dropdown = document.querySelector([
-        '.react-select__menu',
-        '.Select-menu',
-        '.select__menu',
-        '[role="listbox"]'
-      ].join(', '));
-      
+      const dropdown = document.querySelector(
+        ['.react-select__menu', '.Select-menu', '.select__menu', '[role="listbox"]'].join(', '),
+      );
+
       if (dropdown) return true;
       await this.sleep(50);
     }
-    
+
     return false;
   }
 
   private async waitForOptions(element: HTMLElement, timeout = 1000): Promise<boolean> {
     const start = Date.now();
-    
+
     while (Date.now() - start < timeout) {
-      const options = document.querySelectorAll([
-        '.react-select__option',
-        '.Select-option',
-        '.select__option',
-        '[role="option"]'
-      ].join(', '));
-      
+      const options = document.querySelectorAll(
+        ['.react-select__option', '.Select-option', '.select__option', '[role="option"]'].join(', '),
+      );
+
       if (options.length > 0) return true;
       await this.sleep(50);
     }
-    
+
     return false;
   }
 
   private async selectMatchingOption(element: HTMLElement, value: string): Promise<boolean> {
-    const optionSelectors = [
-      '.react-select__option',
-      '.Select-option',
-      '.select__option',
-      '[role="option"]'
-    ];
+    const optionSelectors = ['.react-select__option', '.Select-option', '.select__option', '[role="option"]'];
 
     for (const selector of optionSelectors) {
       const options = document.querySelectorAll(selector);
-      
-      for (const option of options) {
+
+      for (const option of Array.from(options)) {
         const optionText = option.textContent?.trim().toLowerCase() || '';
         const valueLower = value.toLowerCase();
-        
-        if (optionText.includes(valueLower) || 
-            this.fuzzyMatch(optionText, valueLower)) {
+
+        if (optionText.includes(valueLower) || this.fuzzyMatch(optionText, valueLower)) {
           (option as HTMLElement).click();
           await this.sleep(100);
           return true;
@@ -533,11 +526,9 @@ export class ReactSelectHandler implements ComponentHandler {
     // Simple fuzzy matching
     const textWords = text.split(/\s+/);
     const valueWords = value.split(/\s+/);
-    
-    return valueWords.every(valueWord => 
-      textWords.some(textWord => 
-        textWord.includes(valueWord) || valueWord.includes(textWord)
-      )
+
+    return valueWords.every(valueWord =>
+      textWords.some(textWord => textWord.includes(valueWord) || valueWord.includes(textWord)),
     );
   }
 
@@ -560,11 +551,9 @@ export class ReactSelectHandler implements ComponentHandler {
   async clear(element: HTMLElement): Promise<boolean> {
     try {
       // Find clear button
-      const clearButton = element.querySelector([
-        '.react-select__clear-indicator',
-        '.Select-clear',
-        '.select__clear'
-      ].join(', ')) as HTMLElement;
+      const clearButton = element.querySelector(
+        ['.react-select__clear-indicator', '.Select-clear', '.select__clear'].join(', '),
+      ) as HTMLElement;
 
       if (clearButton) {
         clearButton.click();
@@ -591,11 +580,9 @@ export class ReactSelectHandler implements ComponentHandler {
   async getValue(element: HTMLElement): Promise<string | null> {
     try {
       // Try to get value from selected option display
-      const valueContainer = element.querySelector([
-        '.react-select__single-value',
-        '.Select-value-label',
-        '.select__single-value'
-      ].join(', '));
+      const valueContainer = element.querySelector(
+        ['.react-select__single-value', '.Select-value-label', '.select__single-value'].join(', '),
+      );
 
       if (valueContainer?.textContent) {
         return valueContainer.textContent.trim();
@@ -622,18 +609,9 @@ export class VueSelectHandler implements ComponentHandler {
   name = 'Vue Select Handler';
 
   canHandle(element: HTMLElement): boolean {
-    const vuePatterns = [
-      '.v-select',
-      '.v-input',
-      '.v-text-field',
-      '.el-select',
-      '.el-input',
-      '[class*="v-"]'
-    ];
+    const vuePatterns = ['.v-select', '.v-input', '.v-text-field', '.el-select', '.el-input', '[class*="v-"]'];
 
-    return vuePatterns.some(pattern => 
-      element.matches(pattern) || element.querySelector(pattern)
-    );
+    return vuePatterns.some(pattern => element.matches(pattern) || element.querySelector(pattern));
   }
 
   async fill(element: HTMLElement, value: string): Promise<boolean> {
@@ -642,7 +620,7 @@ export class VueSelectHandler implements ComponentHandler {
       const strategies = [
         () => this.fillVuetifySelect(element, value),
         () => this.fillElementUISelect(element, value),
-        () => this.fillGenericVueInput(element, value)
+        () => this.fillGenericVueInput(element, value),
       ];
 
       for (const strategy of strategies) {
@@ -690,7 +668,7 @@ export class VueSelectHandler implements ComponentHandler {
 
     // Select matching option
     const options = document.querySelectorAll('.v-list-item, .v-select-list .v-list__tile');
-    for (const option of options) {
+    for (const option of Array.from(options)) {
       const optionText = option.textContent?.trim().toLowerCase() || '';
       if (optionText.includes(value.toLowerCase())) {
         (option as HTMLElement).click();
@@ -724,7 +702,7 @@ export class VueSelectHandler implements ComponentHandler {
 
     // Select matching option
     const options = document.querySelectorAll('.el-select-dropdown__item');
-    for (const option of options) {
+    for (const option of Array.from(options)) {
       const optionText = option.textContent?.trim().toLowerCase() || '';
       if (optionText.includes(value.toLowerCase())) {
         (option as HTMLElement).click();
@@ -741,11 +719,11 @@ export class VueSelectHandler implements ComponentHandler {
 
     input.focus();
     input.value = value;
-    
+
     // Trigger Vue events
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
-    
+
     return true;
   }
 
@@ -761,7 +739,7 @@ export class VueSelectHandler implements ComponentHandler {
     input.value = '';
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
-    
+
     return true;
   }
 
@@ -783,11 +761,11 @@ export class AngularMaterialHandler implements ComponentHandler {
       'mat-select',
       'mat-input-container',
       '.mat-input-element',
-      '.mat-select-trigger'
+      '.mat-select-trigger',
     ];
 
-    return angularPatterns.some(pattern => 
-      element.matches(pattern) || element.querySelector(pattern) || element.closest(pattern)
+    return angularPatterns.some(
+      pattern => element.matches(pattern) || element.querySelector(pattern) || element.closest(pattern),
     );
   }
 
@@ -796,7 +774,7 @@ export class AngularMaterialHandler implements ComponentHandler {
       // Angular Material interaction strategies
       if (await this.fillMatSelect(element, value)) return true;
       if (await this.fillMatInput(element, value)) return true;
-      
+
       return false;
     } catch (error) {
       console.error('Angular Material fill failed:', error);
@@ -814,7 +792,7 @@ export class AngularMaterialHandler implements ComponentHandler {
 
     // Find and click matching option
     const options = document.querySelectorAll('mat-option');
-    for (const option of options) {
+    for (const option of Array.from(options)) {
       const optionText = option.textContent?.trim().toLowerCase() || '';
       if (optionText.includes(value.toLowerCase())) {
         (option as HTMLElement).click();
@@ -831,11 +809,11 @@ export class AngularMaterialHandler implements ComponentHandler {
 
     input.focus();
     input.value = value;
-    
+
     // Trigger Angular events
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('blur', { bubbles: true }));
-    
+
     return true;
   }
 
@@ -851,7 +829,7 @@ export class AngularMaterialHandler implements ComponentHandler {
     input.value = '';
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('blur', { bubbles: true }));
-    
+
     return true;
   }
 
@@ -868,17 +846,13 @@ export class CustomDropdownHandler implements ComponentHandler {
   name = 'Custom Dropdown Handler';
 
   canHandle(element: HTMLElement): boolean {
-    const customPatterns = [
-      'dropdown',
-      'select',
-      'picker',
-      'chooser',
-      'combobox'
-    ];
+    const customPatterns = ['dropdown', 'select', 'picker', 'chooser', 'combobox'];
 
     const className = element.className.toLowerCase();
-    return customPatterns.some(pattern => className.includes(pattern)) ||
-           element.hasAttribute('role') && element.getAttribute('role') === 'combobox';
+    return (
+      customPatterns.some(pattern => className.includes(pattern)) ||
+      (element.hasAttribute('role') && element.getAttribute('role') === 'combobox')
+    );
   }
 
   async fill(element: HTMLElement, value: string): Promise<boolean> {
@@ -886,7 +860,7 @@ export class CustomDropdownHandler implements ComponentHandler {
       // Try different custom dropdown interaction methods
       if (await this.fillByClick(element, value)) return true;
       if (await this.fillByInput(element, value)) return true;
-      
+
       return false;
     } catch (error) {
       console.error('Custom dropdown fill failed:', error);
@@ -900,20 +874,14 @@ export class CustomDropdownHandler implements ComponentHandler {
     await this.sleep(200);
 
     // Look for options in various containers
-    const optionContainers = [
-      '.dropdown-menu',
-      '.options',
-      '.choices',
-      '[role="listbox"]',
-      '[role="menu"]'
-    ];
+    const optionContainers = ['.dropdown-menu', '.options', '.choices', '[role="listbox"]', '[role="menu"]'];
 
     for (const containerSelector of optionContainers) {
       const container = document.querySelector(containerSelector);
       if (!container) continue;
 
       const options = container.querySelectorAll('li, div, span, [role="option"]');
-      for (const option of options) {
+      for (const option of Array.from(options)) {
         const optionText = option.textContent?.trim().toLowerCase() || '';
         if (optionText.includes(value.toLowerCase())) {
           (option as HTMLElement).click();
@@ -933,7 +901,7 @@ export class CustomDropdownHandler implements ComponentHandler {
     input.value = value;
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
-    
+
     return true;
   }
 
@@ -970,9 +938,7 @@ export class StandardInputHandler implements ComponentHandler {
   name = 'Standard Input Handler';
 
   canHandle(element: HTMLElement): boolean {
-    return element.tagName === 'INPUT' || 
-           element.tagName === 'TEXTAREA' || 
-           element.tagName === 'SELECT';
+    return element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT';
   }
 
   async fill(element: HTMLElement, value: string): Promise<boolean> {
@@ -990,18 +956,19 @@ export class StandardInputHandler implements ComponentHandler {
 
   private fillSelect(select: HTMLSelectElement, value: string): boolean {
     const options = Array.from(select.options);
-    
+
     // Try exact match first
-    let matchingOption = options.find(option => 
-      option.value.toLowerCase() === value.toLowerCase() ||
-      option.textContent?.toLowerCase() === value.toLowerCase()
+    let matchingOption = options.find(
+      option =>
+        option.value.toLowerCase() === value.toLowerCase() || option.textContent?.toLowerCase() === value.toLowerCase(),
     );
 
     // Try partial match
     if (!matchingOption) {
-      matchingOption = options.find(option => 
-        option.value.toLowerCase().includes(value.toLowerCase()) ||
-        option.textContent?.toLowerCase().includes(value.toLowerCase())
+      matchingOption = options.find(
+        option =>
+          option.value.toLowerCase().includes(value.toLowerCase()) ||
+          option.textContent?.toLowerCase().includes(value.toLowerCase()),
       );
     }
 

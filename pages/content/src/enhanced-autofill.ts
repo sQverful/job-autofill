@@ -1998,6 +1998,8 @@ export class EnhancedAutofill {
         await this.triggerComprehensiveClick(bestMatch.element);
         await this.delay(200);
 
+        let foundOption = false;
+
         // Verify the selection worked
         const selectionWorked = await this.verifyOptionSelection(control, bestMatch.element, optionText);
 
@@ -2017,8 +2019,6 @@ export class EnhancedAutofill {
           console.log(`  Option: "${opt.text}" (score: ${score})`);
         });
       }
-
-      let foundOption = false;
       if (bestMatch && bestMatch.score > 30) {
         const optionText = bestMatch.element.textContent?.trim() || '';
         console.log(`Best match found: "${optionText}" (score: ${bestMatch.score})`);
@@ -2349,14 +2349,15 @@ export class EnhancedAutofill {
         return false;
       }
 
-      console.log(`Attempting to handle file upload for field: ${field.label}`);
+      console.log(`File upload field detected: ${field.label}. Skipping autofill to preserve upload buttons.`);
 
-      // For now, show notification about file upload
-      // In a real implementation, this would handle the actual file upload
-      this.showFileUploadNotification(element, fileData);
+      // Don't actually interact with file upload fields to avoid triggering
+      // website's upload state changes that remove the upload buttons
+      // Just show a notification that the user needs to upload manually
+      this.showFileUploadGuidance(element, fileData);
 
-      // Mark as successful since we have file data available
-      return true;
+      // Return false to indicate this field was skipped
+      return false;
     } catch (error) {
       console.error('Error handling file upload:', error);
       return false;
@@ -2590,7 +2591,7 @@ export class EnhancedAutofill {
         const options = safeQuerySelectorAll(selector);
         console.log(`Found ${options.length} options with selector: ${selector}`);
 
-        for (const option of options) {
+        for (const option of Array.from(options)) {
           const optionText = option.textContent?.toLowerCase().trim() || '';
           console.log(`Checking option: "${optionText}" against value: "${value.toLowerCase()}"`);
 
@@ -2614,7 +2615,7 @@ export class EnhancedAutofill {
         for (const selector of optionSelectors) {
           const options = safeQuerySelectorAll(selector);
 
-          for (const option of options) {
+          for (const option of Array.from(options)) {
             const optionText = option.textContent?.toLowerCase().trim() || '';
 
             if (
@@ -2687,7 +2688,7 @@ export class EnhancedAutofill {
       let optionFound = false;
       for (const selector of optionSelectors) {
         const options = safeQuerySelectorAll(selector);
-        for (const option of options) {
+        for (const option of Array.from(options)) {
           const optionText = option.textContent?.toLowerCase() || '';
 
           // Enhanced matching logic
@@ -3126,7 +3127,7 @@ export class EnhancedAutofill {
       await this.delay(100);
 
       const options = element.querySelectorAll('mat-option, [role="option"]');
-      for (const option of options) {
+      for (const option of Array.from(options)) {
         if (option.textContent?.toLowerCase().includes(value.toLowerCase())) {
           (option as HTMLElement).click();
           return true;
@@ -3161,7 +3162,7 @@ export class EnhancedAutofill {
     await this.delay(100);
 
     const options = element.querySelectorAll('[role="option"], .option, [class*="option"]');
-    for (const option of options) {
+    for (const option of Array.from(options)) {
       if (option.textContent?.toLowerCase().includes(value.toLowerCase())) {
         (option as HTMLElement).click();
         return true;
@@ -3279,38 +3280,61 @@ export class EnhancedAutofill {
   }
 
   /**
-   * Show notification for file upload fields
+   * Show guidance for file upload fields
    */
-  private showFileUploadNotification(element: HTMLInputElement, fileData: any): void {
+  private showFileUploadGuidance(element: HTMLInputElement, fileData: any): void {
     const notification = document.createElement('div');
     notification.style.cssText = `
       position: absolute;
-      background: #4CAF50;
+      background: #2196F3;
       color: white;
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
       z-index: 10000;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      max-width: 200px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      max-width: 280px;
+      line-height: 1.4;
+      cursor: pointer;
     `;
-    notification.textContent = `📎 Ready to upload: ${fileData.name || fileData.fileName}`;
+    notification.innerHTML = `
+      <div style="font-weight: 600; margin-bottom: 4px;">📎 File Upload Required</div>
+      <div style="font-size: 12px; opacity: 0.9;">
+        Please manually upload: <strong>${fileData.name || fileData.fileName}</strong>
+      </div>
+      <div style="font-size: 11px; margin-top: 4px; opacity: 0.8;">
+        Click here to dismiss
+      </div>
+    `;
 
     const rect = element.getBoundingClientRect();
-    notification.style.top = `${rect.bottom + window.scrollY + 5}px`;
+    notification.style.top = `${rect.bottom + window.scrollY + 8}px`;
     notification.style.left = `${rect.left + window.scrollX}px`;
 
     document.body.appendChild(notification);
 
-    setTimeout(() => {
+    // Remove on click or after timeout
+    const removeNotification = () => {
       if (notification.parentNode) {
         notification.parentNode.removeChild(notification);
       }
-    }, 5000);
+    };
 
-    element.addEventListener('click', () => {
-      console.log('File upload field clicked. Available file:', fileData);
-    });
+    notification.addEventListener('click', removeNotification);
+
+    setTimeout(removeNotification, 8000);
+
+    // Add a subtle highlight to the file input to draw attention
+    const originalBorder = element.style.border;
+    const originalBoxShadow = element.style.boxShadow;
+
+    element.style.border = '2px solid #2196F3';
+    element.style.boxShadow = '0 0 8px rgba(33, 150, 243, 0.3)';
+
+    setTimeout(() => {
+      element.style.border = originalBorder;
+      element.style.boxShadow = originalBoxShadow;
+    }, 3000);
   }
 
   /**

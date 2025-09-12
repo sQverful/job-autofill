@@ -3,38 +3,50 @@
  */
 
 // Supported job platforms
-export type JobPlatform = 'linkedin' | 'indeed' | 'workday' | 'custom';
+export type JobPlatform =
+  | 'linkedin'
+  | 'indeed'
+  | 'workday'
+  | 'custom'
+  | 'smartrecruiters'
+  | 'teamtailor'
+  | 'greenhouse'
+  | 'lever'
+  | 'bamboohr'
+  | 'jobvite'
+  | 'icims'
+  | 'company_careers';
 
 // Form field types
-export type FieldType = 
-  | 'text' 
-  | 'email' 
-  | 'phone' 
-  | 'textarea' 
-  | 'select' 
-  | 'checkbox' 
-  | 'radio' 
-  | 'file' 
-  | 'date' 
+export type FieldType =
+  | 'text'
+  | 'email'
+  | 'phone'
+  | 'textarea'
+  | 'select'
+  | 'checkbox'
+  | 'radio'
+  | 'file'
+  | 'date'
   | 'number'
   | 'url';
 
 // AI content types
-export type AIContentType = 
-  | 'cover_letter' 
-  | 'question_response' 
-  | 'summary' 
+export type AIContentType =
+  | 'cover_letter'
+  | 'question_response'
+  | 'summary'
   | 'objective'
   | 'why_interested'
   | 'why_qualified';
 
 // Autofill features supported by platform
-export type AutofillFeature = 
-  | 'basic_info' 
-  | 'work_experience' 
-  | 'education' 
-  | 'skills' 
-  | 'file_upload' 
+export type AutofillFeature =
+  | 'basic_info'
+  | 'work_experience'
+  | 'education'
+  | 'skills'
+  | 'file_upload'
   | 'ai_content'
   | 'default_answers';
 
