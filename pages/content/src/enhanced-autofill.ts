@@ -1075,24 +1075,13 @@ export class EnhancedAutofill {
         // Skip file fields completely to prevent DOM mutations
         if (field.type === 'file') {
           console.log(`Skipping file upload field: ${field.label} to prevent DOM mutations`);
+          skippedFields.push({
+            fieldId: field.id,
+            selector: field.selector,
+            reason: 'file_upload_disabled',
+            message: 'File upload fields are skipped to prevent DOM mutations',
+          });
           continue; // Skip to next field
-
-          if (success) {
-            filledFields.push({
-              fieldId: field.id,
-              selector: field.selector,
-              value: 'File upload handled',
-              source: field.mappedProfileField ? 'profile' : 'default_answer',
-            });
-          } else {
-            errors.push({
-              fieldId: field.id,
-              selector: field.selector,
-              error: 'File upload failed',
-              message: 'Could not handle file upload for this field',
-            });
-          }
-          continue;
         }
 
         const value = this.getFieldValue(field, this.profile);

@@ -9,7 +9,7 @@ import type { UserProfile } from '@extension/shared';
 
 const Options = () => {
   const { isLight } = useStorage(exampleThemeStorage);
-  const logo = isLight ? 'options/logo_horizontal.svg' : 'options/logo_horizontal_dark.svg';
+  const logo = isLight ? 'options/icon-16.png' : 'options/icon-16.png';
 
   const goGithubSite = () => chrome.tabs.create(PROJECT_URL_OBJECT);
 
@@ -27,28 +27,19 @@ const Options = () => {
   return (
     <div className={cn('min-h-screen', isLight ? 'bg-slate-50 text-gray-900' : 'bg-gray-900 text-gray-100')}>
       {/* Header */}
-      <header className={cn(
-        'shadow-sm border-b',
-        isLight ? 'bg-white border-gray-200' : 'bg-gray-800 border-gray-700'
-      )}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+      <header
+        className={cn('border-b shadow-sm', isLight ? 'border-gray-200 bg-white' : 'border-gray-700 bg-gray-800')}>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-4">
               <button onClick={goGithubSite}>
                 <img src={chrome.runtime.getURL(logo)} className="h-8" alt="logo" />
               </button>
-              <h1 className={cn(
-                'text-xl font-semibold',
-                isLight ? 'text-gray-900' : 'text-gray-100'
-              )}>
-                Job Application Autofill
-              </h1>
+              <h1 className={cn('text-xl font-semibold', isLight ? 'text-gray-900' : 'text-gray-100')}>Apply Ninja</h1>
             </div>
-            
+
             <div className="flex items-center space-x-4">
-              <ToggleButton showLabel={true}>
-                {t('toggleTheme')}
-              </ToggleButton>
+              <ToggleButton showLabel={true}>{t('toggleTheme')}</ToggleButton>
             </div>
           </div>
         </div>
