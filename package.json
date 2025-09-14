@@ -1,13 +1,13 @@
 {
-  "name": "chrome-extension-boilerplate-react-vite",
-  "version": "0.5.1",
-  "description": "chrome extension boilerplate",
+  "name": "ApplyNinja-job-application-autofill-extension",
+  "version": "1.0.0",
+  "description": "Chrome extension for automatically filling job application forms",
   "license": "MIT",
   "private": true,
   "sideEffects": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite.git"
+    "url": "https://github.com/sQverful/job-autofill.git"
   },
   "type": "module",
   "scripts": {
