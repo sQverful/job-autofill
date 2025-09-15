@@ -13,7 +13,7 @@ import type {
   ContentGenerationPreferences,
   GenerationResult,
   AIContentManagerConfig
-} from '@extension/content/src/ai-content';
+} from '@extension/content-script/src/ai-content';
 
 interface DetectedField {
   element: HTMLElement;
@@ -193,7 +193,7 @@ export const AIContentManager: React.FC<AIContentManagerProps> = ({
           ...prev,
           [field.id]: { 
             status: result.success ? 'success' : 'error',
-            message: result.success ? undefined : result.errors?.[0]
+            message: result.success ? undefined : result.error?.message
           }
         }));
       }

@@ -9,7 +9,7 @@ import type {
   AIContentRequestType, 
   ContentGenerationPreferences,
   GenerationResult 
-} from '@extension/content/src/ai-content';
+} from '@extension/content-script/src/ai-content';
 
 interface AIContentModalProps {
   isOpen: boolean;
@@ -67,7 +67,7 @@ export const AIContentModal: React.FC<AIContentModalProps> = ({
         setSuggestions(result.suggestions || []);
         setConfidence(result.confidence);
       } else {
-        setError(result.errors?.[0] || 'Failed to generate content');
+        setError(result.error?.message || 'Failed to generate content');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
@@ -88,7 +88,7 @@ export const AIContentModal: React.FC<AIContentModalProps> = ({
   };
 
   const handlePreferenceChange = (key: keyof ContentGenerationPreferences, value: any) => {
-    setPreferences(prev => ({ ...prev, [key]: value }));
+    setPreferences((prev: Partial<ContentGenerationPreferences>) => ({ ...prev, [key]: value }));
   };
 
   if (!isOpen) return null;

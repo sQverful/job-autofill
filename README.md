@@ -2,166 +2,213 @@
 
 <div align="center">
 
-<picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/99cb6303-64e4-4bed-bf3f-35735353e6de" />
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/a5dbf71c-c509-4c4f-80f4-be88a1943b0a" />
-    <img alt="Logo" src="https://github.com/user-attachments/assets/99cb6303-64e4-4bed-bf3f-35735353e6de" />
-</picture>
-
 ![](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)
 ![](https://img.shields.io/badge/Typescript-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![](https://badges.aleen42.com/src/vitejs.svg)
-
-![GitHub action badge](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/actions/workflows/build-zip.yml/badge.svg)
-![GitHub action badge](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/actions/workflows/lint.yml/badge.svg)
-
-<a href="https://discord.gg/4ERQ6jgV9a" target="_blank"><img src="https://discord.com/api/guilds/1263404974830915637/widget.png"/></a>
+![](https://img.shields.io/badge/Chrome-Extension-green?style=flat-square&logo=googlechrome)
 
 </div>
 
-A powerful Chrome extension built with React, Vite, and TypeScript that automatically fills job application forms with your personal information.
+**Apply Ninja** - A sophisticated Chrome extension that automatically fills job application forms with your personal information, saving time and ensuring consistency across applications.
 
-## 🚀 Features
+## ✨ Features
 
-### Core Functionality
-- **Smart Form Detection**: Automatically detects job application forms on major job sites
-- **One-Click Autofill**: Fill entire forms with a single click
-- **Profile Management**: Store and manage your personal, work, and preference information
-- **Site-Specific Configuration**: Customize field mappings for different job sites
-- **Export/Import Profiles**: Backup and share your profile data
-- **Animated Feedback**: Visual feedback during autofill process with smooth animations
+- **🎯 Smart Form Detection**: Automatically detects job application forms across major job platforms
+- **⚡ One-Click Autofill**: Fill entire forms instantly with your saved profile data
+- **📝 Comprehensive Profile Management**: Store personal info, work experience, education, and preferences
+- **🔄 Multi-Step Form Support**: Handles complex, multi-page application processes
+- **🎨 Modern UI Components**: Supports React Select, dynamic forms, and SPA applications
+- **📊 Real-time Feedback**: Visual progress indicators and success/error notifications
+- **🔒 Privacy-First**: All data stored locally - no external servers involved
+- **📤 Import/Export**: Backup and restore your profile data
+- **♿ Accessibility**: Full keyboard navigation and screen reader support
 
-### Supported Components
+## 🌐 Supported Platforms
 
-#### A. Content Script (`pages/content/`)
-- **Purpose**: Detect and interact with job application forms
-- **Key Functions**:
-  - Scan pages for form fields
-  - Map fields to your data schema
-  - Inject user data into forms
-  - Handle dynamic forms (React/Vue apps)
+- **LinkedIn Jobs**
+- **Indeed**
+- **Workday**
+- **SmartRecruiters**
+- **Greenhouse**
+- **Lever**
+- **BambooHR**
+- **Custom company career pages**
+- **And many more ATS systems**
 
-#### B. Content UI (`pages/content-ui/`)
-- **Purpose**: Floating UI overlay on job sites
-- **Features**:
-  - Autofill trigger button with hover animations
-  - Quick preview of data to be filled
-  - Field mapping interface
-  - Real-time form detection with visual indicators
+## 🏗️ Architecture
 
-#### C. Popup (`pages/popup/`)
-- **Purpose**: Main extension interface
-- **Features**:
-  - User profile management with tabbed interface
-  - Data entry forms with real-time validation
-  - Settings and preferences
-  - Export/import profiles with drag-and-drop support
-  - Save status indicators with animations
+### Core Components
 
-#### D. Background Script (`pages/background/`)
-- **Purpose**: Handle cross-tab communication and storage
-- **Features**:
-  - Data synchronization
-  - Site-specific configurations
-  - Update management
-  - Form detection coordination
+**Content Scripts** (`pages/content/`)
+- **Enhanced Autofill Engine**: Intelligent form detection and field mapping
+- **Component Detection**: Handles modern React/Vue components and custom inputs
+- **Multi-Strategy Detection**: Traditional forms, SPAs, and page-wide field scanning
+
+**Popup Interface** (`pages/popup/`)
+- **Profile Management**: Comprehensive user data entry and editing
+- **Autofill Control**: Trigger autofill and view detailed results
+- **Settings & Privacy**: Configure extension behavior and data handling
+
+**Content UI** (`pages/content-ui/`)
+- **Floating Button**: Contextual autofill trigger on job sites
+- **Visual Feedback**: Progress indicators and success/error states
+
+**Background Service** (`chrome-extension/src/background/`)
+- **Message Routing**: Handles communication between components
+- **Extension Lifecycle**: Manages installation, updates, and settings
+
+### Data Flow
+
+```
+User Profile (Local Storage) → Content Script → Form Detection → Field Mapping → Autofill → Visual Feedback
+```
 
 ## 🛠️ Technology Stack
 
-- **Framework**: React 19 with TypeScript
-- **Build Tool**: Vite with Turborepo
-- **Styling**: Tailwind CSS
+- **Frontend**: React 19, TypeScript, Tailwind CSS
+- **Build System**: Vite, Turborepo (monorepo)
 - **Extension**: Chrome Manifest V3
 - **Storage**: Chrome Extension Storage API
-- **Architecture**: Modular monorepo structure
-- **Animations**: CSS transitions and transforms for smooth UX
+- **Testing**: Comprehensive test suite
+- **Accessibility**: WCAG 2.1 compliant
 
-## 📦 Installation
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js >= 22.15.1 (check `.nvmrc` file)
-- pnpm package manager
+- **Node.js** >= 22.15.1 (see `.nvmrc`)
+- **pnpm** package manager
+- **Chrome** browser for development
 
-### Setup
-1. Clone this repository:
+### Installation & Development
+
+1. **Clone the repository**
    ```bash
-   git clone https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite
+   git clone <repository-url>
+   cd job-autofill-extension
    ```
 
-2. Install dependencies:
+2. **Install dependencies**
    ```bash
    pnpm install
    ```
 
-### Development
-```bash
-pnpm dev
-```
+3. **Start development server**
+   ```bash
+   pnpm dev
+   ```
+
+4. **Load extension in Chrome**
+   - Open Chrome and go to `chrome://extensions`
+   - Enable "Developer mode" (top right toggle)
+   - Click "Load unpacked"
+   - Select the `dist` folder from the project
+
+5. **Start using the extension**
+   - Click the extension icon in Chrome toolbar
+   - Set up your profile with personal information
+   - Navigate to any job site and click "Fill Out Form"
 
 ### Production Build
+
 ```bash
+# Build for production
 pnpm build
+
+# Create extension package
+pnpm zip
 ```
 
-### Load Extension in Chrome
-1. Open Chrome and navigate to `chrome://extensions`
-2. Enable "Developer mode"
-3. Click "Load unpacked"
-4. Select the `dist` folder from this project
+## 📖 How to Use
 
-## 🎯 Usage
+### 1. Set Up Your Profile
+- Click the extension icon in your Chrome toolbar
+- Navigate to the "Profile" tab
+- Fill in your personal information, work experience, and preferences
+- Save your profile (all data is stored locally)
 
-### Setting Up Your Profile
-1. Click the extension icon in Chrome toolbar
-2. Fill out your personal information in the popup
-3. Add work experience and preferences
-4. Save your profile
+### 2. Apply to Jobs
+- Visit any supported job site (LinkedIn, Indeed, etc.)
+- Open a job application form
+- The extension will automatically detect fillable forms
+- Click the "Fill Out Form" button in the extension popup
+- Review the filled information and submit
 
-### Using Autofill
-1. Navigate to a job site (LinkedIn, Indeed, Glassdoor, etc.)
-2. Open a job application form
-3. Look for the floating autofill button
-4. Click "Autofill Form" to populate fields with smooth animations
-5. Review and submit your application
+### 3. Manage Your Data
+- **Export**: Backup your profile as a JSON file
+- **Import**: Restore profile from a backup file
+- **Edit**: Update your information anytime
+- **Privacy**: All data stays on your device
 
-### Customizing Field Mappings
-1. Open the extension popup
-2. Go to Settings tab
-3. Configure site-specific field mappings
-4. Enable/disable sites as needed
-
-## 🏗️ Project Structure
+## 📁 Project Structure
 
 ```
-├── pages/
-│   ├── background/          # Background script
-│   ├── content/            # Content script for form detection
-│   ├── content-ui/         # Floating UI overlay with animations
-│   ├── popup/              # Extension popup interface
-│   └── options/            # Options page
-├── packages/
-│   ├── storage/            # Data storage utilities
-│   ├── shared/             # Shared utilities and types
-│   └── ui/                 # UI components with animation support
-└── chrome-extension/       # Extension manifest and assets
+job-autofill-extension/
+├── pages/                   # Extension pages
+│   ├── content/            # Form detection & autofill logic
+│   │   ├── src/
+│   │   │   ├── enhanced-autofill.ts      # Main autofill engine
+│   │   │   ├── components/               # Form interaction components
+│   │   │   ├── detection/                # Form detection strategies
+│   │   │   └── utils/                    # Helper utilities
+│   ├── content-ui/         # Floating UI overlay
+│   ├── popup/              # Main extension interface
+│   │   ├── src/
+│   │   │   ├── components/               # Profile forms & settings
+│   │   │   └── Popup.tsx                 # Main popup component
+│   └── background/         # Service worker
+├── packages/               # Shared packages
+│   ├── shared/            # Types & interfaces
+│   ├── storage/           # Data persistence layer
+│   ├── ui/                # Reusable UI components
+│   └── ...                # Build tools & utilities
+├── chrome-extension/       # Extension configuration
+│   ├── manifest.ts        # Extension manifest
+│   └── public/            # Static assets
+└── job_forms_samples/      # Sample forms for testing
 ```
 
-## 🔧 Configuration
+## 🔧 Development
 
-### Supported Job Sites
-- LinkedIn Jobs
-- Indeed
-- Glassdoor
-- Monster
-- ZipRecruiter
-- And more...
+### Available Scripts
 
-### Custom Site Configuration
-Add new job sites by configuring field mappings in the options page or by modifying the site configurations in the background script.
+```bash
+# Development
+pnpm dev              # Start development server with hot reload
+pnpm dev:firefox      # Development build for Firefox
+
+# Production
+pnpm build            # Production build for Chrome
+pnpm build:firefox    # Production build for Firefox
+
+# Testing & Quality
+pnpm type-check       # TypeScript type checking
+pnpm lint             # ESLint code linting
+pnpm lint:fix         # Fix linting issues
+pnpm format           # Prettier code formatting
+
+# Packaging
+pnpm zip              # Create extension package (.zip)
+pnpm e2e              # End-to-end testing
+```
+
+### Adding New Job Sites
+
+1. **Identify form patterns** in `pages/content/src/enhanced-autofill.ts`
+2. **Add platform detection** in `detectPlatform()` method
+3. **Configure field mappings** in `mapToProfileField()` method
+4. **Test with sample forms** in `job_forms_samples/`
+
+### Extending Profile Data
+
+1. **Update types** in `packages/shared/lib/types/profile.ts`
+2. **Modify storage** in `packages/storage/`
+3. **Update UI forms** in `pages/popup/src/components/`
+4. **Add field mappings** in content script
 
 ## 📊 Data Schema
 
-### User Profile Structure
+The extension manages comprehensive profile data:
+
 ```typescript
 interface UserProfile {
   personalInfo: {
@@ -169,381 +216,122 @@ interface UserProfile {
     lastName: string;
     email: string;
     phone: string;
-    address: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
+    address: Address;
+    linkedInUrl?: string;
+    portfolioUrl?: string;
+    githubUrl?: string;
   };
-  workInfo: {
-    currentTitle: string;
-    experience: string;
+  professionalInfo: {
+    workExperience: WorkExperience[];
+    education: Education[];
     skills: string[];
-    linkedinUrl: string;
-    portfolioUrl: string;
-    githubUrl: string;
+    certifications: Certification[];
+    summary?: string;
   };
   preferences: {
-    desiredSalary: string;
-    availableStartDate: string;
-    workAuthorization: string;
-    willingToRelocate: boolean;
+    jobPreferences: JobPreferences;
+    defaultAnswers: Record<string, string>;
+    privacySettings: PrivacySettings;
+  };
+  documents: {
+    resumes: ResumeDocument[];
+    coverLetters: CoverLetterTemplate[];
   };
 }
 ```
 
-## 🎨 Animation Features
+### Smart Field Detection
 
-### Visual Feedback
-- **Loading Animations**: Smooth spinners during profile save operations
-- **Transition Animations**: Seamless tab switching and form interactions
-- **Autofill Feedback**: Field highlighting and progress indicators during form filling
-- **Success/Error States**: Visual confirmation with appropriate animations
-- **Hover Effects**: Interactive button and element animations
+The extension intelligently maps form fields using pattern matching:
 
-### Accessibility
-- Respects `prefers-reduced-motion` settings
-- Provides alternative feedback for users with motion sensitivity
-- Maintains core functionality without animations
+- **Personal Info**: Name, email, phone, address
+- **Professional**: Work experience, education, skills
+- **Preferences**: Salary, start date, work authorization
+- **Demographics**: Optional diversity and inclusion questions
+- **Documents**: Resume and cover letter uploads
+
+## 🎨 User Experience
+
+### Visual Design
+- **Clean Interface**: Intuitive popup design with tabbed navigation
+- **Real-time Feedback**: Progress indicators and status messages
+- **Smooth Animations**: Respects user's motion preferences
+- **Responsive Design**: Works across different screen sizes
+
+### Accessibility Features
+- **Keyboard Navigation**: Full keyboard support for all interactions
+- **Screen Reader Support**: ARIA labels and semantic HTML
+- **Motion Preferences**: Respects `prefers-reduced-motion` settings
+- **High Contrast**: Compatible with browser accessibility settings
 
 ## 🔒 Privacy & Security
 
-- All data is stored locally in Chrome's extension storage
-- No data is sent to external servers
-- Profile information is only used for form filling
-- Export/import functionality for data portability
-
-## 🚀 Development Commands
-
-```bash
-# Development with hot reload
-pnpm dev
-
-# Production build
-pnpm build
-
-# Type checking
-pnpm type-check
-
-# Linting
-pnpm lint
-pnpm lint:fix
-
-# Clean build artifacts
-pnpm clean
-
-# Create extension package
-pnpm zip
-```
+- **Local Storage Only**: All data stored in Chrome's extension storage
+- **No External Servers**: Zero data transmission to third parties
+- **User Control**: Complete control over your data with export/import
+- **Minimal Permissions**: Only requests necessary browser permissions
+- **Open Source**: Transparent codebase for security review
 
 ## 🤝 Contributing
 
+We welcome contributions! Here's how you can help:
+
+1. **Report Issues**: Found a bug or have a feature request? Open an issue
+2. **Add Job Sites**: Help us support more job platforms
+3. **Improve Detection**: Enhance form field detection accuracy
+4. **UI/UX**: Improve the user interface and experience
+5. **Documentation**: Help improve documentation and examples
+
+### Development Workflow
+
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes and test thoroughly
+4. Commit your changes (`git commit -m 'Add amazing feature'`)
+5. Push to the branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
 
 ## 📝 License
 
-MIT License - see LICENSE file for details
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-Built on top of the excellent [Chrome Extension Boilerplate](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite) by Jonghakseo.
+- Built with the [Chrome Extension Boilerplate](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite)
+- Icons and design inspiration from the community
+- Thanks to all contributors and testers
 
 ## 🔧 Troubleshooting
 
-### Node.js Version Issues
-This project requires Node.js >= 22.15.1. If you're getting version errors:
+### Common Issues
 
-1. Install Node Version Manager (nvm):
-   ```bash
-   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-   ```
+**Extension not loading:**
+- Ensure you've run `pnpm build` first
+- Check that the `dist` folder exists
+- Verify Developer Mode is enabled in Chrome
 
-2. Install and use the required Node version:
-   ```bash
-   nvm install 22.15.1
-   nvm use 22.15.1
-   ```
-
-3. Install pnpm:
-   ```bash
-   npm install -g pnpm
-   ```
-
-### Extension Loading Issues
-- Make sure to build the extension first with `pnpm build`
-- Check that the `dist` folder exists and contains the built files
-- Verify that Chrome Developer Mode is enabled
-- Try reloading the extension if changes aren't reflected
-
-### Form Detection Issues
+**Form not detected:**
 - The extension works best on major job sites
-- Some sites may require custom field mapping configuration
-- Dynamic forms (React/Vue) are supported but may need a moment to load
+- Some custom sites may need manual configuration
+- Try refreshing the page after loading the extension
 
-### Animation Performance Issues
-- Animations automatically respect system motion preferences
-- If experiencing performance issues, animations can be disabled in settings
-- Ensure hardware acceleration is enabled in Chrome for best performance
+**Node.js version errors:**
+```bash
+# Install correct Node.js version
+nvm install 22.15.1
+nvm use 22.15.1
+npm install -g pnpm
+```
 
-## 📞 Support
+### Getting Help
 
-If you encounter any issues or have questions:
-1. Check the troubleshooting section above
-2. Look through existing GitHub issues
-3. Create a new issue with detailed information about your problem
-
-> [!NOTE]
-> This project is listed in the [Awesome Vite](https://github.com/vitejs/awesome-vite)
-
-> [!TIP]
-> Share storage state between all pages for seamless user experience
-
-## Table of Contents
-
-- [Intro](#intro)
-- [Features](#features)
-- [Structure](#structure)
-    - [ChromeExtension](#structure-chrome-extension)
-    - [Packages](#structure-packages)
-    - [Pages](#structure-pages)
-- [Installation](#installation)
-    - [Chrome](#installation-chrome)
-    - [Firefox](#installation-firefox)
-- [Install dependency](#install-dependency)
-    - [For root](#install-dependency-for-root)
-    - [For module](#install-dependency-for-module)
-- [Environment variables](#env-variables)
-    - [Add new](#env-variables-new)
-    - [Set via CLI](#env-variables-cli-set)
-- [Troubleshooting](#troubleshooting)
-    - [Hot module reload seems to have frozen](#hot-module-reload-seems-to-have-frozen)
-    - [Imports not resolving correctly](#imports-not-resolving-correctly)
-- [Community](#community)
-- [Debugging](#debugging)
-- [Reference](#reference)
-- [Star History](#star-history)
-- [Contributors](#contributors)
-
-## Intro
-
-This boilerplate helps you create Chrome/Firefox extensions using React and Typescript. It improves
-the build speed and development experience by using Vite and Turborepo.
-
-## Features
-
-- [React](https://reactjs.org/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Tailwindcss](https://tailwindcss.com/)
-- [Vite](https://vitejs.dev/) with [Rollup](https://rollupjs.org/)
-- [Turborepo](https://turbo.build/repo)
-- [Prettier](https://prettier.io/)
-- [ESLint](https://eslint.org/)
-- [Chrome Extensions Manifest Version 3](https://developer.chrome.com/docs/extensions/mv3/intro/)
-- [Custom i18n package](/packages/i18n/)
-- [Custom HMR (Hot Module Rebuild) plugin](/packages/hmr)
-- [End-to-end testing with WebdriverIO](https://webdriver.io/)
-- Streamlined ESLint rules for easier contributions
-
-## Installation
-
-1. Clone this repository.( ```git clone https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite``` )
-2. Ensure your node version is >= than in `.nvmrc` file, recommend to use [nvm](https://github.com/nvm-sh/nvm?tab=readme-ov-file#intro)
-3. Edit `/packages/i18n/locales/`{your locale(s)}/`messages.json`
-4. In the objects `extensionDescription` and `extensionName`, change the `message` fields (leave `description` alone)
-5. Install pnpm globally: `npm install -g pnpm`
-6. Run `pnpm install`
-7. Check if you have that configuration in your IDE/Editor:
-    - <b>VS Code</b>:
-        - Installed [ESLint extension](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
-        - Installed [Prettier extension](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-        - Enabled `Typescript Workbench version` in settings:
-            - CTRL + SHIFT + P -> Search: `Typescript: Select Typescript version...` -> `Use Workbench version`
-            - [Read more](https://code.visualstudio.com/docs/languages/typescript#_using-newer-typescript-versions)
-        - Optional, for imports to work correctly in WSL, you might need to install the [Remote - WSL](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-wsl) extension and connect to WSL remotely from VS Code. See overview section in the extension page for more information.
-    - <b>WebStorm</b>:
-      - Configured [ESLint](https://www.jetbrains.com/help/webstorm/eslint.html#ws_eslint_configure_run_eslint_on_save)
-      - Configured [Prettier](https://prettier.io/docs/en/webstorm.html)
-      - Optional, but useful `File | Settings | Tools | Actions on Save`\
-      -> `Optimize imports` and `Reformat code`
-8. Run `pnpm update-version <version>` for change the `version` to the desired version of your extension.
-
-> [!IMPORTANT]
-> On Windows, make sure you have WSL enabled and Linux distribution (e.g. Ubuntu) installed on WSL.
-> 
-> [Installation Guide](https://learn.microsoft.com/en-us/windows/wsl/install)
-
-<b>Then, depending on the target browser:</b>
-
-### For Chrome: <a name="installation-chrome"></a>
-
-1. Run:
-    - Dev: `pnpm dev` (on Windows, you should run as administrator;
-      see [issue#456](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/issues/456))
-    - Prod: `pnpm build`
-2. Open in browser - `chrome://extensions`
-3. Check - <kbd>Developer mode</kbd>
-4. Click - <kbd>Load unpacked</kbd> in the upper left corner
-5. Select the `dist` directory from the boilerplate project
-
-### For Firefox: <a name="installation-firefox"></a>
-
-1. Run:
-    - Dev: `pnpm dev:firefox`
-    - Prod: `pnpm build:firefox`
-2. Open in browser - `about:debugging#/runtime/this-firefox`
-3. Click - <kbd>Load Temporary Add-on...</kbd> in the upper right corner
-4. Select the `./dist/manifest.json` file from the boilerplate project
-
-> [!NOTE]
-> In Firefox, you load add-ons in temporary mode. That means they'll disappear after each browser close. You have to
-> load the add-on on every browser launch.
-
-## Install dependency for turborepo: <a name="install-dependency"></a>
-
-### For root: <a name="install-dependency-for-root"></a>
-
-1. Run `pnpm i <package> -w`
-
-### For module: <a name="install-dependency-for-module"></a>
-
-1. Run `pnpm i <package> -F <module name>`
-
-`package` - Name of the package you want to install e.g. `nodemon` \
-`module-name` - You can find it inside each `package.json` under the key `name`, e.g. `@extension/content-script`, you
-can use only `content-script` without `@extension/` prefix
-
-## How do I disable modules I'm not using?
-
-[Read here](packages/module-manager/README.md)
-
-## Environment variables
-
-Read: [Env Documentation](packages/env/README.md)
-
-## Boilerplate structure <a name="structure"></a>
-
-### Chrome extension <a name="structure-chrome-extension"></a>
-
-The extension lives in the `chrome-extension` directory and includes the following files:
-
-- [`manifest.ts`](chrome-extension/manifest.ts) - script that outputs the `manifest.json`
-- [`src/background`](chrome-extension/src/background) - [background script](https://developer.chrome.com/docs/extensions/mv3/background_pages/)
-  (`background.service_worker` in manifest.json)
-- [`public`](chrome-extension/public/) - icons referenced in the manifest; content CSS for user's page injection
-
-> [!IMPORTANT]
-> To facilitate development, the boilerplate is configured to "Read and change all your data on all websites".
-> In production, it's best practice to limit the premissions to only the strictly necessary websites. See
-> [Declaring permissions](https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions)
-> and edit `manifest.js` accordingly.
-
-### Pages <a name="structure-pages"></a>
-
-Code that is transpiled to be part of the extension lives in the [pages](pages) directory.
-
-- [`content`](pages/content) - Scripts injected into specified pages (You can see it in console)
-- [`content-ui`](pages/content-ui) - React Components injected into specified pages (You can see it at the very bottom of pages)
-- [`content-runtime`](pages/content-runtime/src/) - [injected content scripts](https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts#functionality)
-  This can be injected from e.g. `popup` like standard `content`
-- [`devtools`](pages/devtools/) - [extend the browser DevTools](https://developer.chrome.com/docs/extensions/how-to/devtools/extend-devtools#creating)
-  (`devtools_page` in manifest.json)
-- [`devtools-panel`](pages/devtools-panel/) - [DevTools panel](https://developer.chrome.com/docs/extensions/reference/api/devtools/panels)
-  for [devtools](pages/devtools/src/index.ts)
-
-- [`options`](pages/options/) - [options page](https://developer.chrome.com/docs/extensions/develop/ui/options-page)
-  (`options_page` in manifest.json)
-- [`popup`](pages/popup/) - [popup](https://developer.chrome.com/docs/extensions/reference/api/action#popup) shown when
-  clicking the extension in the toolbar
-  (`action.default_popup` in manifest.json)
-- [`side-panel`](pages/side-panel/) - [sidepanel (Chrome 114+)](https://developer.chrome.com/docs/extensions/reference/api/sidePanel)
-  (`side_panel.default_path` in manifest.json)
-
-### Packages <a name="structure-packages"></a>
-
-Some shared packages:
-
-- `dev-utils` - utilities for Chrome extension development (manifest-parser, logger)
-- `env` - exports object which contain all environment variables from `.env` and dynamically declared
-- `hmr` - custom HMR plugin for Vite, injection script for reload/refresh, HMR dev-server
-- `i18n` - custom internationalization package; provides i18n function with type safety and other validation
-- `shared` - shared code for the entire project (types, constants, custom hooks, components etc.)
-- `storage` - helpers for easier integration with [storage](https://developer.chrome.com/docs/extensions/reference/api/storage), e.g. local/session storages
-- `tailwind-config` - shared Tailwind config for entire project
-- `tsconfig` - shared tsconfig for the entire project
-- `ui` - function to merge your Tailwind config with the global one; you can save components here
-- `vite-config` - shared Vite config for the entire project
-
-Other useful packages:
-
-- `zipper` - run `pnpm zip` to pack the `dist` folder into `extension-YYYYMMDD-HHmmss.zip` inside the newly created
-  `dist-zip`
-- `module-manager` - run `pnpm module-manager` to enable/disable modules
-- `e2e` - run `pnpm e2e` for end-to-end tests of your zipped extension on different browsers
-
-## Troubleshooting
-
-### Hot module reload seems to have frozen
-
-If saving source files doesn't cause the extension HMR code to trigger a reload of the browser page, try this:
-
-1. Ctrl+C the development server and restart it (`pnpm run dev`)
-2. If you get a [`grpc` error](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/issues/612),
-   [kill the
-   `turbo` process](https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/issues/612#issuecomment-2518982339)
-   and run `pnpm dev` again.
-
-### Imports not resolving correctly
-
-If you are using WSL and imports are not resolving correctly, ensure that you have connected VS Code to WSL remotely using the [Remote - WSL](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-wsl) extension.
-
-## Community
-
-To chat with other community members, you can join the [Discord](https://discord.gg/4ERQ6jgV9a) server.
-You can ask questions on that server, and you can also help others.
-
-Also, suggest new features or share any challenges you've faced while developing Chrome extensions!
-
-## Debugging
-
-If you're debugging one, you can use [Brie](https://go.briehq.com/github?utm_source=CEB) lets you capture screenshots, errors, and network activity, making it easier for us to help.
-
-## Reference
-
-- [Chrome Extensions](https://developer.chrome.com/docs/extensions)
-- [Vite Plugin](https://vitejs.dev/guide/api-plugin.html)
-- [Rollup](https://rollupjs.org/guide/en/)
-- [Turborepo](https://turbo.build/repo/docs)
-- [Rollup-plugin-chrome-extension](https://www.extend-chrome.dev/rollup-plugin)
-
-## Star History <a name="star-history"></a>
-
-<a href="https://star-history.com/#Jonghakseo/chrome-extension-boilerplate-react-vite&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Jonghakseo/chrome-extension-boilerplate-react-vite&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Jonghakseo/chrome-extension-boilerplate-react-vite&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Jonghakseo/chrome-extension-boilerplate-react-vite&type=Date" />
- </picture>
-</a>
-
-## Contributors <a name="contributors"></a>
-
-This Boilerplate is made possible thanks to all of its contributors.
-
-<a href="https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite/graphs/contributors">
-  <img width="500px" src="https://contrib.rocks/image?repo=Jonghakseo/chrome-extension-boilerplate-react-vite" alt="All Contributors"/>
-</a>
+1. Check existing [GitHub Issues](https://github.com/your-repo/issues)
+2. Create a new issue with:
+   - Browser version
+   - Extension version
+   - Steps to reproduce
+   - Console errors (if any)
 
 ---
 
-## Special Thanks To
-
-| <a href="https://jb.gg/OpenSourceSupport"><img width="40" src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="JetBrains Logo (Main) logo."></a> | <a href="https://www.linkedin.com/in/j-acks0n"><img width="40" style="border-radius:50%" src='https://avatars.githubusercontent.com/u/23139754' alt='Jackson Hong'/></a> |
-|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-
----
-
-Made by [Jonghakseo](https://jonghakseo.github.io/)
+**Made with ❤️ for job seekers everywhere**

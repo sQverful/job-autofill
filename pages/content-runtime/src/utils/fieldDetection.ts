@@ -4,7 +4,7 @@
  * Utilities for detecting form fields that can benefit from AI content generation
  */
 
-import type { AIContentRequestType } from '@extension/content/src/ai-content';
+import type { AIContentRequestType } from '@extension/content-script/src/ai-content';
 
 export interface DetectedField {
   element: HTMLElement;

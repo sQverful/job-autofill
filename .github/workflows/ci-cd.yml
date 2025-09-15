@@ -90,68 +90,45 @@ jobs:
           ZIP_NAME=$(basename "$ZIP_FILE")
           echo "zip_file=$ZIP_FILE" >> $GITHUB_OUTPUT
           echo "zip_name=$ZIP_NAME" >> $GITHUB_OUTPUT
+          echo "Found zip file: $ZIP_FILE"
           
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          name: "Smart AI Autofill Extension ${{ github.ref_name }}"
           body: |
-            ## Chrome Extension Release ${{ github.ref_name }}
+            ## Smart AI Autofill Chrome Extension ${{ github.ref_name }}
             
-            ### Installation
-            1. Download the extension zip file below
-            2. Extract the zip file
-            3. Open Chrome and navigate to `chrome://extensions/`
-            4. Enable "Developer mode" in the top right
-            5. Click "Load unpacked" and select the extracted folder
+            ### 🚀 Quick Install (Recommended)
+            1. **Download** the `${{ steps.get-zip-name.outputs.zip_name }}` file below
+            2. **Extract** the zip file to a folder on your computer
+            3. **Open Chrome** → navigate to `chrome://extensions/`
+            4. **Enable** "Developer mode" toggle (top right corner)
+            5. **Click** "Load unpacked" → select the extracted folder
+            6. **Done!** The extension should appear in your toolbar
             
-            ### Changes
-            See the commit history for detailed changes in this release.
+            ### 🛠️ Development Installation
+            See [INSTALLATION.md](./INSTALLATION.md) for detailed development setup instructions.
+            
+            ### ✨ Features
+            - 🤖 AI-powered form filling for job applications
+            - 🎯 Smart field detection and content generation  
+            - ⚙️ Customizable content preferences
+            - 🔒 Privacy-focused local processing
+            - 📱 Draggable autofill interface
+            
+            ### 📋 What's New
+            - Merged multiple extensions into one unified solution
+            - Added draggable autofill button for better UX
+            - Improved privacy controls and data handling
+            - Enhanced form field detection and filling accuracy
+            - Fixed various UI/UX issues and stability improvements
+            
+            ### 🐛 Bug Reports & Support
+            Found an issue? Please [create an issue](../../issues/new) with details about your browser and the problem.
           files: ${{ steps.get-zip-name.outputs.zip_file }}
           draft: false
           prerelease: false
+          generate_release_notes: true
 
-  firefox-build:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: pnpm
-          
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
-        
-      - name: Build Firefox extension
-        run: pnpm build:firefox
-        
-      - name: Create Firefox zip package
-        run: pnpm zip:firefox
-        
-      - name: Get Firefox zip file name
-        id: get-firefox-zip-name
-        run: |
-          XPI_FILE=$(ls dist-zip/*.xpi | head -n 1)
-          XPI_NAME=$(basename "$XPI_FILE")
-          echo "xpi_file=$XPI_FILE" >> $GITHUB_OUTPUT
-          echo "xpi_name=$XPI_NAME" >> $GITHUB_OUTPUT
-          
-      - name: Upload Firefox build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: firefox-extension-build-${{ github.sha }}
-          path: |
-            dist/**/*
-            dist-zip/**/*
-          retention-days: 30

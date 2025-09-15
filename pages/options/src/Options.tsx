@@ -4,8 +4,9 @@ import { PROJECT_URL_OBJECT, useStorage, withErrorBoundary, withSuspense } from 
 import { exampleThemeStorage } from '@extension/storage';
 import { cn, ErrorDisplay, LoadingSpinner, ToggleButton } from '@extension/ui';
 import { ProfileManager } from './components/ProfileManager';
+import { AIConfigurationManager } from './components/AIConfigurationManager';
 import { profileStorage } from '@extension/storage';
-import type { UserProfile } from '@extension/shared';
+import type { UserProfile, AISettings } from '@extension/shared';
 
 const Options = () => {
   const { isLight } = useStorage(exampleThemeStorage);
@@ -22,6 +23,10 @@ const Options = () => {
       console.error('Failed to save profile:', error);
       throw error;
     }
+  };
+
+  const handleAISettingsChange = (settings: AISettings) => {
+    console.log('AI settings updated:', settings);
   };
 
   return (
@@ -47,7 +52,17 @@ const Options = () => {
 
       {/* Main Content */}
       <main className="py-8">
-        <ProfileManager onSave={handleSaveProfile} />
+        <div className="max-w-4xl mx-auto px-6 space-y-8">
+          {/* AI Configuration Section */}
+          <section>
+            <AIConfigurationManager onSettingsChange={handleAISettingsChange} />
+          </section>
+          
+          {/* Profile Management Section */}
+          <section>
+            <ProfileManager onSave={handleSaveProfile} />
+          </section>
+        </div>
       </main>
     </div>
   );

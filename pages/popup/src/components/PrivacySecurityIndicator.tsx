@@ -76,7 +76,8 @@ export const PrivacySecurityIndicator: React.FC<PrivacySecurityIndicatorProps> =
     try {
       const bytesInUse = await chrome.storage.local.getBytesInUse();
       const quota = chrome.storage.local.QUOTA_BYTES || 10485760; // 10MB default
-      return { bytesInUse, quota };
+      const usagePercentage = (bytesInUse / quota) * 100;
+      return { bytesInUse, quota, usagePercentage };
     } catch (error) {
       console.error('Error getting storage info:', error);
       return null;

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Greenhouse Form Fixes</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .field { margin: 20px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select, input { margin: 5px 0; padding: 5px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .auto-fillable { 
+            display: inline-block; 
+            background: rgb(76, 175, 80); 
+            color: white; 
+            padding: 2px 6px; 
+            border-radius: 3px; 
+            font-size: 10px; 
+            font-weight: 500; 
+            margin-left: 8px; 
+            vertical-align: middle; 
+            opacity: 0.7; 
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Greenhouse Form Fixes</h1>
+    <p>This page tests the fixes for AI autofill issues with Greenhouse forms.</p>
+
+    <div id="custom_fields">
+        <!-- Boolean select field -->
+        <div class="field">
+            <label>Are you legally authorized to work in the country where this role is based?<span class="asterisk">&nbsp;*</span><br>
+                <input type="hidden" name="job_application[answers_attributes][0][question_id]" id="job_application_answers_attributes_0_question_id" value="30766105002" autocomplete="off">
+                <input type="hidden" name="job_application[answers_attributes][0][priority]" id="job_application_answers_attributes_0_priority" value="0" autocomplete="off">
+                <select name="job_application[answers_attributes][0][boolean_value]" id="job_application_answers_attributes_0_boolean_value" aria-required="true">
+                    <option value="">--</option>
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
+                </select>
+                <div class="auto-fillable">✓ Auto-fillable</div>
+            </label>
+        </div>
+
+        <!-- Another boolean select -->
+        <div class="field">
+            <label>Will you require sponsorship?<span class="asterisk">&nbsp;*</span><br>
+                <input type="hidden" name="job_application[answers_attributes][1][question_id]" id="job_application_answers_attributes_1_question_id" value="30766106002" autocomplete="off">
+                <input type="hidden" name="job_application[answers_attributes][1][priority]" id="job_application_answers_attributes_1_priority" value="1" autocomplete="off">
+                <select name="job_application[answers_attributes][1][boolean_value]" id="job_application_answers_attributes_1_boolean_value" aria-required="true">
+                    <option value="">--</option>
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
+                </select>
+                <div class="auto-fillable">✓ Auto-fillable</div>
+            </label>
+        </div>
+
+        <!-- Gender select with specific option values -->
+        <div class="field">
+            <label>Please indicate your gender below:<span class="asterisk">&nbsp;*</span><br>
+                <input type="hidden" name="job_application[answers_attributes][3][question_id]" id="job_application_answers_attributes_3_question_id" value="30766108002" autocomplete="off">
+                <input type="hidden" name="job_application[answers_attributes][3][priority]" id="job_application_answers_attributes_3_priority" value="3" autocomplete="off">
+                <select name="job_application[answers_attributes][3][answer_selected_options_attributes][3][question_option_id]" id="job_application_answers_attributes_3_answer_selected_options_attributes_3_question_option_id" aria-required="true" style="width: 200px;">
+                    <option value="">Please select</option>
+                    <option value="201471065002">Man</option>
+                    <option value="201471066002">Woman</option>
+                    <option value="201471067002">Non-binary</option>
+                    <option value="201471068002">Decline to self-identify</option>
+                </select>
+                <div class="auto-fillable">✓ Auto-fillable</div>
+            </label>
+        </div>
+
+        <!-- Privacy acknowledgment select -->
+        <div class="field">
+            <label>Privacy<span class="asterisk">&nbsp;*</span><br>
+                <input type="hidden" name="job_application[answers_attributes][4][question_id]" id="job_application_answers_attributes_4_question_id" value="30766109002" autocomplete="off">
+                <input type="hidden" name="job_application[answers_attributes][4][priority]" id="job_application_answers_attributes_4_priority" value="4" autocomplete="off">
+                <select name="job_application[answers_attributes][4][answer_selected_options_attributes][4][question_option_id]" id="job_application_answers_attributes_4_answer_selected_options_attributes_4_question_option_id" aria-required="true" style="width: 200px;">
+                    <option value="">Please select</option>
+                    <option value="201471069002">Acknowledge</option>
+                </select>
+                <div class="auto-fillable">✓ Auto-fillable</div>
+            </label>
+        </div>
+
+        <!-- Checkbox group for "How did you hear about us" -->
+        <div class="field">
+            <label>Tell us how you came across this opportunity:<span class="asterisk">&nbsp;*</span><br>
+                <input type="hidden" name="job_application[answers_attributes][6][question_id]" id="job_application_answers_attributes_6_question_id" value="30766112002" autocomplete="off">
+                <input type="hidden" name="job_application[answers_attributes][6][priority]" id="job_application_answers_attributes_6_priority" value="6" autocomplete="off">
+                
+                <label><input type="checkbox" name="job_application[answers_attributes][6][answer_selected_options_attributes][0][question_option_id]" id="job_application_answers_attributes_6_answer_selected_options_attributes_0_question_option_id" value="201471079002" aria-required="true">&nbsp;&nbsp;Blind</label><br>
+                <label><input type="checkbox" name="job_application[answers_attributes][6][answer_selected_options_attributes][11][question_option_id]" id="job_application_answers_attributes_6_answer_selected_options_attributes_11_question_option_id" value="201471090002" aria-required="true">&nbsp;&nbsp;LinkedIn</label><br>
+                <label><input type="checkbox" name="job_application[answers_attributes][6][answer_selected_options_attributes][9][question_option_id]" id="job_application_answers_attributes_6_answer_selected_options_attributes_9_question_option_id" value="201471088002" aria-required="true">&nbsp;&nbsp;Indeed</label><br>
+                <label><input type="checkbox" name="job_application[answers_attributes][6][answer_selected_options_attributes][15][question_option_id]" id="job_application_answers_attributes_6_answer_selected_options_attributes_15_question_option_id" value="201471094002" aria-required="true">&nbsp;&nbsp;Other</label><br>
+            </label>
+        </div>
+    </div>
+
+    <div id="test-results">
+        <h2>Test Results</h2>
+        <div id="results-container"></div>
+    </div>
+
+    <script>
+        // Simulate the instruction executor fixes
+        class TestInstructionExecutor {
+            constructor() {
+                this.logExecution = true;
+            }
+
+            // Test the fixed selector cleaning
+            generateAlternativeSelectors(originalSelector) {
+                const alternatives = [];
+                
+                // Clean the selector by removing [value='...'] parts that AI might add incorrectly
+                let cleanSelector = originalSelector.replace(/\s*\[value=['"][^'"]*['"]\]/g, '');
+                
+                // If we cleaned something, add the clean version as first alternative
+                if (cleanSelector !== originalSelector) {
+                    alternatives.push(cleanSelector);
+                    if (this.logExecution) {
+                        console.log(`[TestExecutor] Cleaned selector from "${originalSelector}" to "${cleanSelector}"`);
+                    }
+                }
+                
+                return alternatives;
+            }
+
+            // Test the fixed option finding
+            findSelectOption(selectElement, value) {
+                if (this.logExecution) {
+                    console.log(`[TestExecutor] Looking for option with value: "${value}" in select with ${selectElement.options.length} options`);
+                }
+
+                // First try to find by exact value
+                for (let i = 0; i < selectElement.options.length; i++) {
+                    const option = selectElement.options[i];
+                    if (option.value === value) {
+                        if (this.logExecution) {
+                            console.log(`[TestExecutor] Found exact value match: "${option.value}"`);
+                        }
+                        return option;
+                    }
+                }
+
+                // Try common value mappings for boolean selects
+                if (value.toLowerCase() === 'yes' || value === '1' || value === 'true') {
+                    for (let i = 0; i < selectElement.options.length; i++) {
+                        const option = selectElement.options[i];
+                        if (option.value === '1' || option.textContent?.toLowerCase().trim() === 'yes') {
+                            if (this.logExecution) {
+                                console.log(`[TestExecutor] Found boolean "Yes" match: value="${option.value}", text="${option.textContent?.trim()}"`);
+                            }
+                            return option;
+                        }
+                    }
+                }
+                
+                if (value.toLowerCase() === 'no' || value === '0' || value === 'false') {
+                    for (let i = 0; i < selectElement.options.length; i++) {
+                        const option = selectElement.options[i];
+                        if (option.value === '0' || option.textContent?.toLowerCase().trim() === 'no') {
+                            if (this.logExecution) {
+                                console.log(`[TestExecutor] Found boolean "No" match: value="${option.value}", text="${option.textContent?.trim()}"`);
+                            }
+                            return option;
+                        }
+                    }
+                }
+
+                // Then try to find by text content (case-insensitive, exact match first)
+                const lowerValue = value.toLowerCase().trim();
+                for (let i = 0; i < selectElement.options.length; i++) {
+                    const option = selectElement.options[i];
+                    const optionText = option.textContent?.toLowerCase().trim();
+                    if (optionText === lowerValue) {
+                        if (this.logExecution) {
+                            console.log(`[TestExecutor] Found exact text match: "${optionText}"`);
+                        }
+                        return option;
+                    }
+                }
+
+                // Try partial matches (for truncated values like "Acknowledg...")
+                const isTruncated = value.endsWith('...');
+                const searchValue = isTruncated ? value.slice(0, -3).toLowerCase().trim() : lowerValue;
+                
+                for (let i = 0; i < selectElement.options.length; i++) {
+                    const option = selectElement.options[i];
+                    const optionText = option.textContent?.toLowerCase().trim();
+                    
+                    if (optionText) {
+                        // If the search value is truncated, look for options that start with it
+                        if (isTruncated && optionText.startsWith(searchValue)) {
+                            if (this.logExecution) {
+                                console.log(`[TestExecutor] Found truncated match: "${searchValue}" matches start of "${optionText}"`);
+                            }
+                            return option;
+                        }
+                        
+                        // For "Acknowledg..." specifically, match "Acknowledge"
+                        if (searchValue === 'acknowledg' && optionText === 'acknowledge') {
+                            if (this.logExecution) {
+                                console.log(`[TestExecutor] Found acknowledge match: "${searchValue}" -> "${optionText}"`);
+                            }
+                            return option;
+                        }
+                    }
+                }
+
+                return null;
+            }
+
+            // Test select option functionality
+            async testSelectOption(selector, value) {
+                const element = document.querySelector(selector);
+                
+                if (!element) {
+                    // Try alternative selectors
+                    const alternatives = this.generateAlternativeSelectors(selector);
+                    for (const altSelector of alternatives) {
+                        const altElement = document.querySelector(altSelector);
+                        if (altElement) {
+                            console.log(`[TestExecutor] Using alternative selector: ${altSelector}`);
+                            return await this.testSelectOption(altSelector, value);
+                        }
+                    }
+                    return { success: false, error: `Element not found: ${selector}` };
+                }
+
+                if (element.tagName.toLowerCase() !== 'select') {
+                    return { success: false, error: 'Element is not a select element' };
+                }
+
+                try {
+                    // Special handling for boolean selects
+                    let searchValue = value;
+                    if (selector.includes('boolean_value') || selector.includes('_boolean_')) {
+                        const lowerValue = value.toLowerCase().trim();
+                        if (lowerValue === 'yes' || lowerValue === 'true') {
+                            searchValue = '1';
+                            console.log(`[TestExecutor] Converting "${value}" to "1" for boolean select`);
+                        } else if (lowerValue === 'no' || lowerValue === 'false') {
+                            searchValue = '0';
+                            console.log(`[TestExecutor] Converting "${value}" to "0" for boolean select`);
+                        }
+                    }
+
+                    const option = this.findSelectOption(element, searchValue);
+                    
+                    if (!option) {
+                        const availableOptions = Array.from(element.options)
+                            .map(opt => `"${opt.value}" (${opt.textContent?.trim()})`)
+                            .join(', ');
+                        
+                        return {
+                            success: false,
+                            error: `Option not found: "${value}" (searched as "${searchValue}"). Available options: ${availableOptions}`
+                        };
+                    }
+
+                    // Select the option
+                    element.value = option.value;
+                    option.selected = true;
+                    element.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    return {
+                        success: true,
+                        actualValue: element.value,
+                        selectedText: option.textContent?.trim()
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: error.message
+                    };
+                }
+            }
+
+            // Test checkbox clicking
+            async testClickCheckbox(selector, value) {
+                let element = document.querySelector(selector);
+                
+                if (!element) {
+                    // Try alternative selectors
+                    const alternatives = this.generateAlternativeSelectors(selector);
+                    for (const altSelector of alternatives) {
+                        const altElement = document.querySelector(altSelector);
+                        if (altElement) {
+                            console.log(`[TestExecutor] Using alternative selector: ${altSelector}`);
+                            element = altElement;
+                            break;
+                        }
+                    }
+                    
+                    if (!element) {
+                        return { success: false, error: `Element not found: ${selector}` };
+                    }
+                }
+
+                if (!(element instanceof HTMLInputElement) || element.type !== 'checkbox') {
+                    return { success: false, error: 'Element is not a checkbox' };
+                }
+
+                try {
+                    // Determine if we should check or uncheck
+                    let shouldCheck = true;
+                    if (value !== undefined) {
+                        shouldCheck = value === 'true' || value === '1' || value === 'on' || value === '';
+                    } else {
+                        // If no value specified, toggle the current state
+                        shouldCheck = !element.checked;
+                    }
+                    
+                    element.checked = shouldCheck;
+                    element.dispatchEvent(new Event('change', { bubbles: true }));
+                    
+                    console.log(`[TestExecutor] ${shouldCheck ? 'Checked' : 'Unchecked'} checkbox: ${element.id || element.name || 'unnamed'}`);
+
+                    return {
+                        success: true,
+                        actualValue: element.checked.toString()
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: error.message
+                    };
+                }
+            }
+        }
+
+        // Run tests
+        async function runTests() {
+            const executor = new TestInstructionExecutor();
+            const resultsContainer = document.getElementById('results-container');
+            
+            const tests = [
+                {
+                    name: 'Boolean Select - Yes (with bad selector)',
+                    test: () => executor.testSelectOption('#job_application_answers_attributes_0_boolean_value [value="Yes"]', 'Yes'),
+                    expected: 'Should clean selector and select "1" option'
+                },
+                {
+                    name: 'Boolean Select - No (with bad selector)',
+                    test: () => executor.testSelectOption('#job_application_answers_attributes_1_boolean_value [value="No"]', 'No'),
+                    expected: 'Should clean selector and select "0" option'
+                },
+                {
+                    name: 'Gender Select - Non-binary',
+                    test: () => executor.testSelectOption('#job_application_answers_attributes_3_answer_selected_options_attributes_3_question_option_id', 'Non-binary'),
+                    expected: 'Should select Non-binary option by text match'
+                },
+                {
+                    name: 'Privacy Select - Truncated "Acknowledg..."',
+                    test: () => executor.testSelectOption('#job_application_answers_attributes_4_answer_selected_options_attributes_4_question_option_id', 'Acknowledg...'),
+                    expected: 'Should match truncated value to "Acknowledge"'
+                },
+                {
+                    name: 'Checkbox - LinkedIn (simple click)',
+                    test: () => executor.testClickCheckbox('#job_application_answers_attributes_6_answer_selected_options_attributes_11_question_option_id', 'true'),
+                    expected: 'Should check the LinkedIn checkbox'
+                },
+                {
+                    name: 'Checkbox - Indeed (simple click)',
+                    test: () => executor.testClickCheckbox('#job_application_answers_attributes_6_answer_selected_options_attributes_9_question_option_id'),
+                    expected: 'Should toggle the Indeed checkbox'
+                }
+            ];
+
+            for (const test of tests) {
+                try {
+                    const result = await test.test();
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = `test-result ${result.success ? 'success' : 'error'}`;
+                    resultDiv.innerHTML = `
+                        <strong>${test.name}</strong><br>
+                        Expected: ${test.expected}<br>
+                        Result: ${result.success ? 'SUCCESS' : 'FAILED'}<br>
+                        ${result.success ? 
+                            `Selected: ${result.selectedText || result.actualValue || 'N/A'}` : 
+                            `Error: ${result.error}`
+                        }
+                    `;
+                    resultsContainer.appendChild(resultDiv);
+                } catch (error) {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'test-result error';
+                    resultDiv.innerHTML = `
+                        <strong>${test.name}</strong><br>
+                        Expected: ${test.expected}<br>
+                        Result: FAILED<br>
+                        Error: ${error.message}
+                    `;
+                    resultsContainer.appendChild(resultDiv);
+                }
+            }
+        }
+
+        // Run tests when page loads
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+</html>

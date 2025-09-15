@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from 'react';
-import type { AIContentRequestType } from '@extension/content/src/ai-content';
+import type { AIContentRequestType } from '@extension/content-script/src/ai-content';
 
 interface AIContentButtonProps {
   fieldElement: HTMLElement;

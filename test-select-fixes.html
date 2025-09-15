@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Select and Checkbox Fixes</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .field { margin: 20px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select, input { padding: 8px; margin: 5px 0; }
+        .test-section { border: 1px solid #ccc; padding: 15px; margin: 20px 0; }
+        .test-section h3 { margin-top: 0; }
+    </style>
+</head>
+<body>
+    <h1>Test Select and Checkbox Fixes</h1>
+    
+    <div class="test-section">
+        <h3>Boolean Select Test (like the failing case)</h3>
+        <div class="field">
+            <label>Are you able to commit to working from one of our Office Hubs 3 days a week?<span class="asterisk">&nbsp;*</span></label>
+            <input type="hidden" name="job_application[answers_attributes][5][question_id]" id="job_application_answers_attributes_5_question_id" value="30766110002" autocomplete="off">
+            <input type="hidden" name="job_application[answers_attributes][5][priority]" id="job_application_answers_attributes_5_priority" value="5" autocomplete="off">
+            <select name="job_application[answers_attributes][5][boolean_value]" id="job_application_answers_attributes_5_boolean_value" aria-required="true">
+                <option value="">--</option>
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>Truncated Option Test</h3>
+        <div class="field">
+            <label>Acknowledgment Question</label>
+            <select id="acknowledgment_select">
+                <option value="">--</option>
+                <option value="acknowledge_terms">I acknowledge and agree to the terms and conditions</option>
+                <option value="decline_terms">I decline to acknowledge the terms</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>Custom Checkbox Test</h3>
+        <div class="field">
+            <label>How did you hear about us?</label>
+            <div id="job_application_answers_attributes_6_answer_selected_options_attributes_0_question_option_id">
+                <div role="checkbox" data-value="linkedin" aria-checked="false" tabindex="0">
+                    <input type="checkbox" name="source[]" value="linkedin" style="display: none;">
+                    LinkedIn
+                </div>
+                <div role="checkbox" data-value="indeed" aria-checked="false" tabindex="0">
+                    <input type="checkbox" name="source[]" value="indeed" style="display: none;">
+                    Indeed
+                </div>
+                <div role="checkbox" data-value="referral" aria-checked="false" tabindex="0">
+                    <input type="checkbox" name="source[]" value="referral" style="display: none;">
+                    Referral
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Results</h3>
+        <div id="test-results"></div>
+        <button onclick="runTests()">Run Tests</button>
+    </div>
+
+    <script>
+        // Mock the instruction executor for testing
+        class MockInstructionExecutor {
+            constructor() {
+                this.options = { logExecution: true };
+            }
+
+            // Simplified version of findSelectOption for testing
+            findSelectOption(selectElement, value) {
+                console.log(`Looking for option with value: "${value}" in select with ${selectElement.options.length} options`);
+                
+                for (let i = 0; i < selectElement.options.length; i++) {
+                    const option = selectElement.options[i];
+                    console.log(`  Option ${i}: value="${option.value}", text="${option.textContent?.trim()}"`);
+                }
+
+                // First try exact value match
+                for (let i = 0; i < selectElement.options.length; i++) {
+                    const option = selectElement.options[i];
+                    if (option.value === value) {
+                        console.log(`Found exact value match: "${option.value}"`);
+                        return option;
+                    }
+                }
+
+                // Try boolean mappings
+                if (value.toLowerCase() === 'yes' || value === '1' || value === 'true') {
+                    for (let i = 0; i < selectElement.options.length; i++) {
+                        const option = selectElement.options[i];
+                        if (option.value === '1' || option.textContent?.toLowerCase().trim() === 'yes') {
+                            console.log(`Found boolean "Yes" match: value="${option.value}", text="${option.textContent?.trim()}"`);
+                            return option;
+                        }
+                    }
+                }
+
+                // Try truncated matches
+                const isTruncated = value.endsWith('...');
+                const searchValue = isTruncated ? value.slice(0, -3).toLowerCase().trim() : value.toLowerCase().trim();
+                
+                for (let i = 0; i < selectElement.options.length; i++) {
+                    const option = selectElement.options[i];
+                    const optionText = option.textContent?.toLowerCase().trim();
+                    
+                    if (optionText) {
+                        if (isTruncated && optionText.startsWith(searchValue)) {
+                            console.log(`Found truncated match: "${searchValue}" matches start of "${optionText}"`);
+                            return option;
+                        }
+                    }
+                }
+
+                console.log(`No option found for value: "${value}"`);
+                return null;
+            }
+
+            async testSelectOption(selector, value) {
+                const element = document.querySelector(selector);
+                if (!element) {
+                    return { success: false, error: `Element not found: ${selector}` };
+                }
+
+                const option = this.findSelectOption(element, value);
+                if (!option) {
+                    const availableOptions = Array.from(element.options)
+                        .map(opt => `"${opt.value}" (${opt.textContent?.trim()})`)
+                        .join(', ');
+                    
+                    return {
+                        success: false,
+                        error: `Option not found: "${value}". Available options: ${availableOptions}`
+                    };
+                }
+
+                element.value = option.value;
+                option.selected = true;
+                element.dispatchEvent(new Event('change', { bubbles: true }));
+
+                return {
+                    success: true,
+                    actualValue: element.value,
+                    selectedText: option.textContent?.trim()
+                };
+            }
+
+            async testCustomCheckbox(selector, value) {
+                const container = document.querySelector(selector);
+                if (!container) {
+                    return { success: false, error: `Container not found: ${selector}` };
+                }
+
+                // Look for checkbox with matching data-value
+                const checkboxes = container.querySelectorAll('[role="checkbox"][data-value]');
+                
+                for (let i = 0; i < checkboxes.length; i++) {
+                    const checkbox = checkboxes[i];
+                    const checkboxValue = checkbox.getAttribute('data-value');
+                    
+                    if (checkboxValue === value || checkboxValue?.trim() === value.trim()) {
+                        checkbox.setAttribute('aria-checked', 'true');
+                        const hiddenInput = checkbox.querySelector('input[type="checkbox"]');
+                        if (hiddenInput) {
+                            hiddenInput.checked = true;
+                        }
+                        checkbox.click();
+                        
+                        return {
+                            success: true,
+                            actualValue: checkboxValue,
+                            element: checkbox
+                        };
+                    }
+                }
+
+                // Fallback for boolean values
+                if (value === 'true' && checkboxes.length > 0) {
+                    const firstCheckbox = checkboxes[0];
+                    firstCheckbox.setAttribute('aria-checked', 'true');
+                    const hiddenInput = firstCheckbox.querySelector('input[type="checkbox"]');
+                    if (hiddenInput) {
+                        hiddenInput.checked = true;
+                    }
+                    firstCheckbox.click();
+                    
+                    return {
+                        success: true,
+                        actualValue: 'true',
+                        element: firstCheckbox,
+                        note: 'Used first checkbox for boolean value'
+                    };
+                }
+
+                return {
+                    success: false,
+                    error: `Custom checkbox with value "${value}" not found`
+                };
+            }
+        }
+
+        async function runTests() {
+            const executor = new MockInstructionExecutor();
+            const results = [];
+
+            // Test 1: Boolean select with "Yes" value (should convert to "1")
+            console.log('\n=== Test 1: Boolean Select with "Yes" ===');
+            const test1 = await executor.testSelectOption('#job_application_answers_attributes_5_boolean_value', 'Yes');
+            results.push({ test: 'Boolean Select "Yes"', result: test1 });
+
+            // Test 2: Boolean select with "1" value (direct match)
+            console.log('\n=== Test 2: Boolean Select with "1" ===');
+            const test2 = await executor.testSelectOption('#job_application_answers_attributes_5_boolean_value', '1');
+            results.push({ test: 'Boolean Select "1"', result: test2 });
+
+            // Test 3: Truncated option value
+            console.log('\n=== Test 3: Truncated Option ===');
+            const test3 = await executor.testSelectOption('#acknowledgment_select', 'I acknowledge...');
+            results.push({ test: 'Truncated Option', result: test3 });
+
+            // Test 4: Custom checkbox with specific value
+            console.log('\n=== Test 4: Custom Checkbox with "linkedin" ===');
+            const test4 = await executor.testCustomCheckbox('#job_application_answers_attributes_6_answer_selected_options_attributes_0_question_option_id', 'linkedin');
+            results.push({ test: 'Custom Checkbox "linkedin"', result: test4 });
+
+            // Test 5: Custom checkbox with boolean "true"
+            console.log('\n=== Test 5: Custom Checkbox with "true" ===');
+            const test5 = await executor.testCustomCheckbox('#job_application_answers_attributes_6_answer_selected_options_attributes_0_question_option_id', 'true');
+            results.push({ test: 'Custom Checkbox "true"', result: test5 });
+
+            // Display results
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<h4>Test Results:</h4>';
+            
+            results.forEach((test, index) => {
+                const div = document.createElement('div');
+                div.style.margin = '10px 0';
+                div.style.padding = '10px';
+                div.style.border = test.result.success ? '2px solid green' : '2px solid red';
+                div.style.backgroundColor = test.result.success ? '#e8f5e8' : '#ffe8e8';
+                
+                div.innerHTML = `
+                    <strong>${test.test}:</strong> ${test.result.success ? 'PASS' : 'FAIL'}<br>
+                    ${test.result.success ? 
+                        `Selected: ${test.result.actualValue} ${test.result.selectedText ? `(${test.result.selectedText})` : ''}${test.result.note ? `<br><em>${test.result.note}</em>` : ''}` :
+                        `Error: ${test.result.error}`
+                    }
+                `;
+                
+                resultsDiv.appendChild(div);
+            });
+        }
+
+        // Add some styling for the custom checkboxes
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('[role="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.style.padding = '8px';
+                checkbox.style.margin = '5px';
+                checkbox.style.border = '1px solid #ccc';
+                checkbox.style.cursor = 'pointer';
+                checkbox.style.display = 'inline-block';
+                checkbox.style.minWidth = '100px';
+                
+                checkbox.addEventListener('click', function() {
+                    const isChecked = this.getAttribute('aria-checked') === 'true';
+                    this.setAttribute('aria-checked', (!isChecked).toString());
+                    this.style.backgroundColor = !isChecked ? '#e8f5e8' : 'white';
+                    
+                    const hiddenInput = this.querySelector('input[type="checkbox"]');
+                    if (hiddenInput) {
+                        hiddenInput.checked = !isChecked;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

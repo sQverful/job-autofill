@@ -88,6 +88,12 @@ export interface ContentGenerationResult {
   error?: AIContentError;
   cached: boolean;
   fromFallback: boolean;
+  // Convenience properties for easier access
+  content?: string;
+  confidence?: number;
+  alternatives?: string[];
+  suggestions?: string[];
+  errors?: string[];
 }
 
 export interface AIContentError {

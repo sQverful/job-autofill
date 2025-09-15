@@ -3,7 +3,7 @@ import { cn, Button, LoadingSpinner } from '@extension/ui';
 import { useStorage } from '@extension/shared';
 import { exampleThemeStorage, profileStorage } from '@extension/storage';
 import type { UserProfile } from '@extension/shared';
-import { ProfileForm, ProfileView, SettingsView, PrivacySecurityIndicator } from './index';
+import { ProfileForm, ProfileView, SettingsView, PrivacySecurityIndicator, AIStatusIndicator } from './index';
 
 interface PopupState {
   currentTab: chrome.tabs.Tab | null;
@@ -406,6 +406,9 @@ export const AutofillControlPopup: React.FC = () => {
   function renderAutofillTab() {
     return (
       <div className="space-y-4">
+        {/* AI Status Indicator */}
+        <AIStatusIndicator onOpenSettings={handleOpenOptions} />
+
         {/* Profile Status */}
         {!state.profileComplete && (
           <div

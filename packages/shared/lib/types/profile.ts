@@ -66,6 +66,18 @@ export interface PrivacySettings {
   dataSyncEnabled: boolean;
 }
 
+// AI-specific preferences
+export interface AIPreferences {
+  preferredTone: 'professional' | 'casual' | 'enthusiastic';
+  customInstructions?: string;
+  excludedFields: string[];
+  learningEnabled: boolean;
+  fieldMappingPreferences: Record<string, string>;
+  autoApproveInstructions: boolean;
+  maxInstructionsPerForm: number;
+  confidenceThreshold: number;
+}
+
 // Resume document
 export interface ResumeDocument {
   id: string;
@@ -127,6 +139,7 @@ export interface UserProfile {
     defaultAnswers: Record<string, string>;
     jobPreferences: JobPreferences;
     privacySettings: PrivacySettings;
+    aiPreferences: AIPreferences;
   };
   documents: {
     resumes: ResumeDocument[];
@@ -137,6 +150,11 @@ export interface UserProfile {
     updatedAt: Date;
     lastSyncAt?: Date;
     version: number;
+    aiLearningData?: {
+      events: any[];
+      patterns: Record<string, any>;
+      corrections: Record<string, any>;
+    };
   };
 }
 

@@ -44,6 +44,15 @@ const DEFAULT_PROFILE: UserProfile = {
       allowAIContentGeneration: true,
       dataSyncEnabled: true,
     },
+    aiPreferences: {
+      preferredTone: 'professional',
+      excludedFields: ['ssn', 'social_security'],
+      learningEnabled: true,
+      fieldMappingPreferences: {},
+      autoApproveInstructions: false,
+      maxInstructionsPerForm: 50,
+      confidenceThreshold: 70,
+    },
   },
   documents: {
     resumes: [],

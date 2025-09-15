@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Autofill Timeout Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+        .submit-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .submit-btn:hover {
+            background-color: #45a049;
+        }
+        .test-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+        .error-simulation {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h2>🧪 AI Autofill Timeout Fix Test</h2>
+        <p>This page tests the AI autofill timeout fix. The extension should now:</p>
+        <ul>
+            <li>✅ Handle API timeouts gracefully (15 second limit)</li>
+            <li>✅ Provide clear error messages</li>
+            <li>✅ Fall back to traditional autofill when AI fails</li>
+            <li>✅ Never leave the loading state stuck</li>
+        </ul>
+    </div>
+
+    <div class="error-simulation">
+        <h3>⚠️ Testing Scenarios</h3>
+        <p>This form will help test various timeout and error scenarios:</p>
+        <ul>
+            <li><strong>Normal operation:</strong> Should work with valid API token</li>
+            <li><strong>Timeout handling:</strong> If API is slow, should timeout after 15 seconds</li>
+            <li><strong>Fallback behavior:</strong> Should use traditional autofill if AI fails</li>
+            <li><strong>Error recovery:</strong> Should show clear error messages</li>
+        </ul>
+    </div>
+
+    <div class="form-container">
+        <h2>Job Application Form - Timeout Test</h2>
+        <form id="job-application-form">
+            <!-- Personal Information -->
+            <div class="form-group">
+                <label for="firstName">First Name *</label>
+                <input type="text" id="firstName" name="firstName" required>
+            </div>
+
+            <div class="form-group">
+                <label for="lastName">Last Name *</label>
+                <input type="text" id="lastName" name="lastName" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone">
+            </div>
+
+            <!-- Work Experience -->
+            <div class="form-group">
+                <label for="currentTitle">Current Job Title</label>
+                <input type="text" id="currentTitle" name="currentTitle">
+            </div>
+
+            <div class="form-group">
+                <label for="experience">Years of Experience</label>
+                <select id="experience" name="experience">
+                    <option value="">Select experience level</option>
+                    <option value="0-1">0-1 years</option>
+                    <option value="2-3">2-3 years</option>
+                    <option value="4-5">4-5 years</option>
+                    <option value="6-10">6-10 years</option>
+                    <option value="10+">10+ years</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="skills">Key Skills (comma separated)</label>
+                <textarea id="skills" name="skills" rows="3" placeholder="e.g., JavaScript, React, Node.js"></textarea>
+            </div>
+
+            <!-- Work Authorization -->
+            <div class="form-group">
+                <label for="workAuth">Work Authorization Status</label>
+                <select id="workAuth" name="workAuth">
+                    <option value="">Select status</option>
+                    <option value="citizen">US Citizen</option>
+                    <option value="permanent_resident">Permanent Resident</option>
+                    <option value="h1b">H1B Visa</option>
+                    <option value="opt">F1 OPT</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <!-- Salary Expectations -->
+            <div class="form-group">
+                <label for="salary">Expected Salary</label>
+                <input type="text" id="salary" name="salary" placeholder="e.g., $80,000">
+            </div>
+
+            <!-- Availability -->
+            <div class="form-group">
+                <label for="startDate">Available Start Date</label>
+                <input type="date" id="startDate" name="startDate">
+            </div>
+
+            <!-- Cover Letter -->
+            <div class="form-group">
+                <label for="coverLetter">Why are you interested in this position?</label>
+                <textarea id="coverLetter" name="coverLetter" rows="4" placeholder="Tell us about your interest and qualifications..."></textarea>
+            </div>
+
+            <!-- File Upload -->
+            <div class="form-group">
+                <label for="resume">Upload Resume</label>
+                <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx">
+            </div>
+
+            <button type="submit" class="submit-btn">Submit Application</button>
+        </form>
+    </div>
+
+    <script>
+        // Add form submission handler
+        document.getElementById('job-application-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Form submission prevented for testing purposes');
+        });
+
+        // Log when page is ready for testing
+        console.log('🧪 AI Autofill Timeout Fix Test Page Ready');
+        console.log('📝 Instructions:');
+        console.log('1. Open the extension popup and ensure AI Mode is enabled');
+        console.log('2. Click the AI autofill button when it appears');
+        console.log('3. Observe the behavior - should not get stuck in loading state');
+        console.log('4. Check console for any "message channel closed" errors');
+        console.log('5. Verify fallback to traditional autofill if AI fails');
+
+        // Add a test button to simulate various scenarios
+        const testButton = document.createElement('button');
+        testButton.textContent = '🧪 Test AI Autofill';
+        testButton.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 1000;
+            font-size: 14px;
+        `;
+        testButton.onclick = function() {
+            console.log('🧪 Manual AI autofill test triggered');
+            // This will be handled by the extension's content script
+        };
+        document.body.appendChild(testButton);
+    </script>
+</body>
+</html>

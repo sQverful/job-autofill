@@ -31,6 +31,11 @@ export interface FormAnalysisResult {
   error?: string;
 }
 
+export interface EnhancedAutofillOptions {
+  enableButtonCreation?: boolean;
+  enableFormDetection?: boolean;
+}
+
 /**
  * Enhanced autofill handler with improved form detection
  */
@@ -42,14 +47,28 @@ export class EnhancedAutofill {
   private componentHandler: UniversalComponentHandler;
   private profileValidator: ProfileDataValidator;
   private componentDetector: ComponentDetector;
+  private options: Required<EnhancedAutofillOptions>;
 
-  constructor() {
+  constructor(options: EnhancedAutofillOptions = {}) {
+    this.options = {
+      enableButtonCreation: true,
+      enableFormDetection: true,
+      ...options
+    };
+    
     this.componentHandler = new UniversalComponentHandler();
     this.profileValidator = new ProfileDataValidator();
     this.componentDetector = new ComponentDetector();
     this.setupMessageHandlers();
     this.loadProfile();
     this.initializeFormDetection();
+  }
+
+  /**
+   * Check if autofill is currently processing
+   */
+  get isProcessingAutofill(): boolean {
+    return this.isProcessing;
   }
 
   /**
@@ -106,7 +125,7 @@ export class EnhancedAutofill {
   /**
    * Handle autofill trigger from popup
    */
-  private async handleAutofillTrigger(message: AutofillTriggerMessage): Promise<AutofillResult> {
+  async handleAutofillTrigger(message: AutofillTriggerMessage): Promise<AutofillResult> {
     if (this.isProcessing) {
       throw new Error('Autofill already in progress');
     }
@@ -3315,6 +3334,10 @@ export class EnhancedAutofill {
    * Initialize form detection and visual indicators
    */
   private async initializeFormDetection(): Promise<void> {
+    if (!this.options.enableFormDetection) {
+      return;
+    }
+
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => this.detectAndIndicateForms());
     } else {
@@ -3385,9 +3408,12 @@ export class EnhancedAutofill {
     const bestForm = this.selectBestForm(analysis.forms);
     if (!bestForm) return;
 
-    const indicator = this.createAutofillIndicator(analysis.platform, bestForm);
-    document.body.appendChild(indicator);
-    this.formIndicators.push(indicator);
+    // Only create main button if enabled
+    if (this.options.enableButtonCreation) {
+      const indicator = this.createAutofillIndicator(analysis.platform, bestForm);
+      document.body.appendChild(indicator);
+      this.formIndicators.push(indicator);
+    }
 
     bestForm.fields.forEach(field => {
       if (field.mappedProfileField) {
@@ -4024,8 +4050,12 @@ export class EnhancedAutofill {
   }
 }
 
-// Initialize enhanced autofill
-const enhancedAutofill = new EnhancedAutofill();
+// Initialize enhanced autofill with button creation disabled (unified manager handles buttons)
+const enhancedAutofill = new EnhancedAutofill({ 
+  enableButtonCreation: false,
+  enableFormDetection: false 
+});
 
-// Export for debugging
+// Export for debugging and AI integration access
 (globalThis as any).enhancedAutofill = enhancedAutofill;
+(window as any).enhancedAutofill = enhancedAutofill;

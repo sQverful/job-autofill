@@ -534,8 +534,18 @@ export class ProfileDataValidator {
       return workType === 'remote' || workType === 'flexible' ? 'Yes' : 'Open to discussion';
     }
 
-    if (label.includes('sponsor')) {
-      return profile.preferences.jobPreferences.requiresSponsorship ? 'Yes' : 'No';
+    if (label.includes('sponsor') || label.includes('visa')) {
+      // Check if the question is asking if they REQUIRE sponsorship
+      if (label.includes('require') || label.includes('need')) {
+        return profile.preferences.jobPreferences.requiresSponsorship ? 'Yes' : 'No';
+      }
+      // If asking if they have authorization (opposite question)
+      return profile.preferences.jobPreferences.requiresSponsorship ? 'No' : 'Yes';
+    }
+    
+    if (label.includes('travel') && label.includes('office')) {
+      // For office travel questions, check relocation willingness as a proxy
+      return profile.preferences.jobPreferences.willingToRelocate ? 'Yes' : 'No';
     }
 
     return 'Yes';

@@ -12,7 +12,7 @@ import type {
   AIContentManagerConfig,
   UserProfile,
   JobContext
-} from '@extension/content/src/ai-content';
+} from '@extension/content-script/src/ai-content';
 
 interface UseAIContentOptions {
   config: AIContentManagerConfig;
@@ -67,12 +67,8 @@ export const useAIContent = ({
               content: `Generated ${type} content with ${preferences.tone} tone`,
               confidence: 0.85,
               suggestions: ['Consider adding more specific examples'],
-              metadata: {
-                requestId: 'mock-request',
-                processingTime: 1500,
-                fromCache: false,
-                fromFallback: false
-              }
+              cached: false,
+              fromFallback: false
             });
           }, 1500);
         });
@@ -170,9 +166,7 @@ export const useAIContent = ({
       const result = await aiManager.generateContent(type, preferences, existingContent);
       
       // Update service availability based on result
-      if (!result.success && result.errors?.some(error => 
-        error.includes('unavailable') || error.includes('timeout')
-      )) {
+      if (!result.success && result.error?.message?.includes('unavailable') || result.error?.message?.includes('timeout')) {
         setIsServiceAvailable(false);
       } else if (result.success) {
         setIsServiceAvailable(true);

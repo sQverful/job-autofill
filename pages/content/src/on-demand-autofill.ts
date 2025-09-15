@@ -24,6 +24,11 @@ export interface FormAnalysisResult {
   error?: string;
 }
 
+export interface OnDemandAutofillOptions {
+  enableButtonCreation?: boolean;
+  enableFormDetection?: boolean;
+}
+
 /**
  * On-demand autofill handler that only runs when triggered by user
  */
@@ -34,13 +39,27 @@ export class OnDemandAutofill {
   private formIndicators: HTMLElement[] = [];
   private componentHandler: UniversalComponentHandler;
   private profileValidator: ProfileDataValidator;
+  private options: Required<OnDemandAutofillOptions>;
 
-  constructor() {
+  constructor(options: OnDemandAutofillOptions = {}) {
+    this.options = {
+      enableButtonCreation: true,
+      enableFormDetection: true,
+      ...options
+    };
+    
     this.componentHandler = new UniversalComponentHandler();
     this.profileValidator = new ProfileDataValidator();
     this.setupMessageHandlers();
     this.loadProfile();
     this.initializeFormDetection();
+  }
+
+  /**
+   * Check if autofill is currently processing
+   */
+  get isProcessingAutofill(): boolean {
+    return this.isProcessing;
   }
 
   /**
@@ -92,7 +111,7 @@ export class OnDemandAutofill {
   /**
    * Handle autofill trigger from popup
    */
-  private async handleAutofillTrigger(message: AutofillTriggerMessage): Promise<AutofillResult> {
+  async handleAutofillTrigger(message: AutofillTriggerMessage): Promise<AutofillResult> {
     if (this.isProcessing) {
       throw new Error('Autofill already in progress');
     }
@@ -353,6 +372,8 @@ export class OnDemandAutofill {
   private extractFieldsFromContainer(container: HTMLElement): FormField[] {
     const fields: FormField[] = [];
     const inputs = container.querySelectorAll('input, textarea, select');
+    const processedRadioGroups = new Set<string>();
+    const processedCustomCheckboxGroups = new Set<string>();
 
     for (let i = 0; i < inputs.length; i++) {
       const element = inputs[i] as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
@@ -362,13 +383,164 @@ export class OnDemandAutofill {
         continue;
       }
 
+      // Special handling for radio buttons - group them by name
+      if (element.tagName.toLowerCase() === 'input' && (element as HTMLInputElement).type === 'radio') {
+        const radioElement = element as HTMLInputElement;
+        const groupName = radioElement.name;
+        
+        if (groupName && !processedRadioGroups.has(groupName)) {
+          processedRadioGroups.add(groupName);
+          
+          // Create a field for the entire radio group
+          const radioGroupField = this.analyzeRadioGroup(groupName, container, i);
+          if (radioGroupField) {
+            fields.push(radioGroupField);
+          }
+        }
+        continue; // Skip individual radio button processing
+      }
+
       const field = this.analyzeFormField(element, i);
       if (field) {
         fields.push(field);
       }
     }
 
+    // Also look for custom checkboxes with role="checkbox"
+    const customCheckboxGroups = container.querySelectorAll('[role="group"]');
+    for (let i = 0; i < customCheckboxGroups.length; i++) {
+      const group = customCheckboxGroups[i] as HTMLElement;
+      const checkboxes = group.querySelectorAll('[role="checkbox"]');
+      
+      if (checkboxes.length > 0) {
+        const groupId = group.getAttribute('data-testid') || group.id || `custom_checkbox_group_${i}`;
+        
+        if (!processedCustomCheckboxGroups.has(groupId)) {
+          processedCustomCheckboxGroups.add(groupId);
+          
+          const customCheckboxField = this.analyzeCustomCheckboxGroup(group, fields.length);
+          if (customCheckboxField) {
+            fields.push(customCheckboxField);
+          }
+        }
+      }
+    }
+
     return fields;
+  }
+
+  /**
+   * Analyze a custom checkbox group (role="checkbox" elements)
+   */
+  private analyzeCustomCheckboxGroup(group: HTMLElement, index: number): FormField | null {
+    try {
+      const checkboxes = group.querySelectorAll('[role="checkbox"]');
+      if (checkboxes.length === 0) {
+        return null;
+      }
+
+      // Get the group label - look for nearby text or data attributes
+      let label = '';
+      
+      // Try to find label from parent elements or siblings
+      const parentElement = group.parentElement;
+      if (parentElement) {
+        const labelElement = parentElement.querySelector('label, .label, .question, [class*="label"]');
+        if (labelElement) {
+          label = labelElement.textContent?.trim() || '';
+        }
+      }
+
+      // Fallback to group's own text content or data attributes
+      if (!label) {
+        label = group.getAttribute('aria-label') || 
+                group.getAttribute('data-label') || 
+                'Custom Checkbox Group';
+      }
+
+      // Get all possible values for this checkbox group
+      const options: string[] = [];
+      checkboxes.forEach(checkbox => {
+        const checkboxElement = checkbox as HTMLElement;
+        const value = checkboxElement.getAttribute('data-value');
+        if (value) {
+          options.push(value);
+        }
+      });
+
+      const selector = group.getAttribute('data-testid') ? 
+        `[data-testid="${group.getAttribute('data-testid')}"]` : 
+        `[role="group"]`;
+
+      console.log(`Custom checkbox group analyzed:`, {
+        label,
+        options,
+        selector,
+        checkboxCount: checkboxes.length
+      });
+
+      return {
+        id: `custom_checkbox_group_${index}`,
+        type: 'checkbox',
+        label,
+        selector,
+        required: group.hasAttribute('required') || group.getAttribute('aria-required') === 'true',
+        placeholder: undefined,
+        options,
+        mappedProfileField: this.mapToProfileField(label, 'checkbox'),
+        validationRules: [],
+      };
+    } catch (error) {
+      console.error('Error analyzing custom checkbox group:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Analyze a radio button group as a single field
+   */
+  private analyzeRadioGroup(groupName: string, container: HTMLElement, index: number): FormField | null {
+    try {
+      const radioButtons = container.querySelectorAll(`input[type="radio"][name="${groupName}"]`);
+      if (radioButtons.length === 0) {
+        return null;
+      }
+
+      const firstRadio = radioButtons[0] as HTMLInputElement;
+      const label = this.getFieldLabel(firstRadio);
+      const selector = `input[type="radio"][name="${groupName}"]`;
+
+      // Get all possible values for this radio group
+      const options: string[] = [];
+      radioButtons.forEach(radio => {
+        const radioInput = radio as HTMLInputElement;
+        if (radioInput.value) {
+          options.push(radioInput.value);
+        }
+      });
+
+      console.log(`Radio group analyzed:`, {
+        groupName,
+        label,
+        options,
+        selector
+      });
+
+      return {
+        id: `radio_group_${index}`,
+        type: 'radio',
+        label,
+        selector,
+        required: firstRadio.hasAttribute('required'),
+        placeholder: undefined,
+        options,
+        mappedProfileField: this.mapToProfileField(label, 'radio'),
+        validationRules: this.extractValidationRules(firstRadio),
+      };
+    } catch (error) {
+      console.error('Error analyzing radio group:', error);
+      return null;
+    }
   }
 
   /**
@@ -551,6 +723,20 @@ export class OnDemandAutofill {
         return null;
       }
 
+      const mappedField = this.mapToProfileField(label, type);
+      
+      // Debug logging for radio buttons
+      if (type === 'radio') {
+        console.log(`Radio button detected:`, {
+          label,
+          type,
+          selector,
+          mappedField,
+          name: element.getAttribute('name'),
+          value: (element as HTMLInputElement).value
+        });
+      }
+
       return {
         id: `field_${index}`,
         type,
@@ -559,7 +745,7 @@ export class OnDemandAutofill {
         required: element.hasAttribute('required'),
         placeholder: element.getAttribute('placeholder') || undefined,
         options: this.getFieldOptions(element),
-        mappedProfileField: this.mapToProfileField(label, type),
+        mappedProfileField: mappedField,
         validationRules: this.extractValidationRules(element),
       };
     } catch (error) {
@@ -607,6 +793,18 @@ export class OnDemandAutofill {
    * Get field label
    */
   private getFieldLabel(element: HTMLElement): string {
+    // For radio buttons, try to get the fieldset legend first
+    if (element.tagName.toLowerCase() === 'input' && (element as HTMLInputElement).type === 'radio') {
+      const fieldset = element.closest('fieldset');
+      if (fieldset) {
+        const legend = fieldset.querySelector('legend');
+        if (legend && legend.textContent?.trim()) {
+          console.log(`Found radio fieldset legend: ${legend.textContent.trim()}`);
+          return legend.textContent.trim();
+        }
+      }
+    }
+
     // Try to find associated label
     const id = element.id;
     if (id) {
@@ -759,7 +957,19 @@ export class OnDemandAutofill {
     if (this.matchesPattern(allText, ['work.?authorization', 'visa', 'sponsorship', 'eligible.?to.?work'])) {
       return 'preferences.jobPreferences.workAuthorization';
     }
+    
+    // Enhanced visa sponsorship detection for radio buttons
+    if (this.matchesPattern(allText, ['require.*visa.*sponsorship', 'visa.*sponsorship', 'sponsorship.*required', 'need.*sponsorship'])) {
+      console.log(`Mapped visa sponsorship field: ${label} -> preferences.jobPreferences.requiresSponsorship`);
+      return 'preferences.jobPreferences.requiresSponsorship';
+    }
+    
     if (this.matchesPattern(allText, ['relocat', 'willing.?to.?move', 'move.?for.?job'])) {
+      return 'preferences.jobPreferences.willingToRelocate';
+    }
+    
+    // Enhanced travel/office visit detection
+    if (this.matchesPattern(allText, ['travel.*office', 'visit.*office', 'come.*office', 'office.*visit', 'work.*from.*office'])) {
       return 'preferences.jobPreferences.willingToRelocate';
     }
 
@@ -1078,7 +1288,19 @@ export class OnDemandAutofill {
           continue;
         }
 
-        const success = await this.fillFieldElement(element, field, value);
+        let success = false;
+        
+        // Special handling for radio groups
+        if (field.type === 'radio' && field.selector.includes('[name=')) {
+          success = await this.fillRadioGroup(field, value);
+        } 
+        // Special handling for custom checkbox groups
+        else if (field.type === 'checkbox' && field.id.includes('custom_checkbox_group')) {
+          success = await this.fillCustomCheckboxGroup(field, value);
+        } 
+        else {
+          success = await this.fillFieldElement(element, field, value);
+        }
 
         if (success) {
           filledFields.push({
@@ -1212,31 +1434,278 @@ export class OnDemandAutofill {
   }
 
   /**
+   * Fill custom checkbox group (role="checkbox" elements)
+   */
+  private async fillCustomCheckboxGroup(field: FormField, value: string): Promise<boolean> {
+    try {
+      console.log(`Filling custom checkbox group: ${field.label} with value: ${value}`);
+      
+      // Find the group element
+      const groupElement = document.querySelector(field.selector) as HTMLElement;
+      if (!groupElement) {
+        console.error(`Custom checkbox group not found: ${field.selector}`);
+        return false;
+      }
+
+      // Find all checkboxes in the group
+      const checkboxes = groupElement.querySelectorAll('[role="checkbox"]');
+      if (checkboxes.length === 0) {
+        console.error('No checkboxes found in custom checkbox group');
+        return false;
+      }
+
+      let success = false;
+      const lowerValue = value.toLowerCase();
+
+      // Try to find matching checkbox by data-value or text content
+      for (let i = 0; i < checkboxes.length; i++) {
+        const checkbox = checkboxes[i] as HTMLElement;
+        const dataValue = checkbox.getAttribute('data-value')?.toLowerCase();
+        const textContent = checkbox.textContent?.trim().toLowerCase();
+
+        // Check if this checkbox matches the value
+        if (dataValue === lowerValue || 
+            textContent?.includes(lowerValue) ||
+            (lowerValue === 'yes' && (dataValue === 'true' || textContent?.includes('yes'))) ||
+            (lowerValue === 'no' && (dataValue === 'false' || textContent?.includes('no')))) {
+          
+          try {
+            // Focus the checkbox if possible
+            if (checkbox.tabIndex >= 0) {
+              checkbox.focus();
+            }
+
+            // Set aria-checked to true
+            checkbox.setAttribute('aria-checked', 'true');
+
+            // Find and update any hidden input
+            const hiddenInput = checkbox.querySelector('input[type="checkbox"]') as HTMLInputElement;
+            if (hiddenInput) {
+              hiddenInput.checked = true;
+              this.triggerEvents(hiddenInput);
+            }
+
+            // Click the checkbox to trigger any event handlers
+            checkbox.click();
+
+            console.log(`Successfully selected custom checkbox: ${dataValue || textContent}`);
+            success = true;
+            break;
+          } catch (error) {
+            console.error('Error clicking custom checkbox:', error);
+            continue;
+          }
+        }
+      }
+
+      if (!success) {
+        console.warn(`No matching custom checkbox found for value: ${value} in group: ${field.label}`);
+        
+        // Fallback: try to select the first checkbox if it's a yes/no type question
+        if (lowerValue === 'yes' || lowerValue === 'true') {
+          const firstCheckbox = checkboxes[0] as HTMLElement;
+          try {
+            firstCheckbox.setAttribute('aria-checked', 'true');
+            const hiddenInput = firstCheckbox.querySelector('input[type="checkbox"]') as HTMLInputElement;
+            if (hiddenInput) {
+              hiddenInput.checked = true;
+              this.triggerEvents(hiddenInput);
+            }
+            firstCheckbox.click();
+            success = true;
+            console.log('Fallback: selected first checkbox for yes/true value');
+          } catch (error) {
+            console.error('Fallback checkbox selection failed:', error);
+          }
+        }
+      }
+
+      return success;
+    } catch (error) {
+      console.error('Error filling custom checkbox group:', error);
+      return false;
+    }
+  }
+
+  /**
    * Handle checkbox and radio inputs
    */
   private handleCheckboxRadio(element: HTMLInputElement, value: string): boolean {
     try {
       const lowerValue = value.toLowerCase();
-      const shouldCheck = lowerValue === 'yes' || lowerValue === 'true' || lowerValue === '1';
 
       if (element.type === 'checkbox') {
+        const shouldCheck = lowerValue === 'yes' || lowerValue === 'true' || lowerValue === '1';
         element.checked = shouldCheck;
-      } else if (element.type === 'radio') {
-        // For radio buttons, check if this option matches the value
-        const optionText = element.nextElementSibling?.textContent?.toLowerCase() || '';
-        const labelText = element.closest('label')?.textContent?.toLowerCase() || '';
+        this.triggerEvents(element);
+        return true;
+      } 
+      
+      if (element.type === 'radio') {
+        // For radio buttons, we need to find the correct option in the group
+        const name = element.name;
+        if (!name) {
+          console.warn('Radio button has no name attribute');
+          return false;
+        }
 
-        if (optionText.includes(lowerValue) || labelText.includes(lowerValue)) {
-          element.checked = true;
+        // Find all radio buttons with the same name
+        const radioGroup = document.querySelectorAll(`input[type="radio"][name="${name}"]`);
+        let selectedRadio: HTMLInputElement | null = null;
+
+        // Try to find the radio button that matches the value
+        for (let i = 0; i < radioGroup.length; i++) {
+          const radio = radioGroup[i] as HTMLInputElement;
+          
+          // Check the radio button's value attribute
+          if (radio.value && radio.value.toLowerCase() === lowerValue) {
+            selectedRadio = radio;
+            break;
+          }
+
+          // Check the label text associated with this radio button
+          const label = this.getRadioLabel(radio);
+          if (label && label.toLowerCase().includes(lowerValue)) {
+            selectedRadio = radio;
+            break;
+          }
+
+          // Check for common yes/no patterns
+          if (lowerValue === 'yes' && (radio.value === 'yes' || radio.value === 'true' || radio.value === '1')) {
+            selectedRadio = radio;
+            break;
+          }
+          if (lowerValue === 'no' && (radio.value === 'no' || radio.value === 'false' || radio.value === '0')) {
+            selectedRadio = radio;
+            break;
+          }
+        }
+
+        if (selectedRadio) {
+          // Uncheck all radio buttons in the group first
+          radioGroup.forEach(radio => {
+            (radio as HTMLInputElement).checked = false;
+          });
+
+          // Check the selected radio button
+          selectedRadio.checked = true;
+          this.triggerEvents(selectedRadio);
+          
+          console.log(`Selected radio button: ${selectedRadio.value} for question with value: ${value}`);
+          return true;
+        } else {
+          console.warn(`No matching radio button found for value: ${value} in group: ${name}`);
+          return false;
         }
       }
 
-      this.triggerEvents(element);
-      return true;
+      return false;
     } catch (error) {
       console.error('Error handling checkbox/radio:', error);
       return false;
     }
+  }
+
+  /**
+   * Fill radio button group
+   */
+  private async fillRadioGroup(field: FormField, value: string): Promise<boolean> {
+    try {
+      console.log(`Filling radio group: ${field.label} with value: ${value}`);
+      
+      // Extract the name from the selector
+      const nameMatch = field.selector.match(/name="([^"]+)"/);
+      if (!nameMatch) {
+        console.error('Could not extract name from radio group selector:', field.selector);
+        return false;
+      }
+      
+      const groupName = nameMatch[1];
+      const radioButtons = document.querySelectorAll(`input[type="radio"][name="${groupName}"]`);
+      
+      if (radioButtons.length === 0) {
+        console.error(`No radio buttons found for group: ${groupName}`);
+        return false;
+      }
+
+      const lowerValue = value.toLowerCase();
+      let selectedRadio: HTMLInputElement | null = null;
+
+      // Try to find the radio button that matches the value
+      for (let i = 0; i < radioButtons.length; i++) {
+        const radio = radioButtons[i] as HTMLInputElement;
+        
+        console.log(`Checking radio button:`, {
+          value: radio.value,
+          id: radio.id,
+          label: this.getRadioLabel(radio)
+        });
+        
+        // Check the radio button's value attribute
+        if (radio.value && radio.value.toLowerCase() === lowerValue) {
+          selectedRadio = radio;
+          break;
+        }
+
+        // Check for common yes/no patterns
+        if (lowerValue === 'yes' && (radio.value === 'yes' || radio.value === 'true' || radio.value === '1')) {
+          selectedRadio = radio;
+          break;
+        }
+        if (lowerValue === 'no' && (radio.value === 'no' || radio.value === 'false' || radio.value === '0')) {
+          selectedRadio = radio;
+          break;
+        }
+      }
+
+      if (selectedRadio) {
+        // Uncheck all radio buttons in the group first
+        radioButtons.forEach(radio => {
+          (radio as HTMLInputElement).checked = false;
+        });
+
+        // Check the selected radio button
+        selectedRadio.checked = true;
+        this.triggerEvents(selectedRadio);
+        
+        console.log(`Successfully selected radio button: ${selectedRadio.value} (${selectedRadio.id}) for question: ${field.label}`);
+        return true;
+      } else {
+        console.warn(`No matching radio button found for value: ${value} in group: ${groupName}`);
+        console.log('Available options:', Array.from(radioButtons).map(r => (r as HTMLInputElement).value));
+        return false;
+      }
+    } catch (error) {
+      console.error('Error filling radio group:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get label text for a radio button
+   */
+  private getRadioLabel(radio: HTMLInputElement): string | null {
+    // Try to find label by 'for' attribute
+    if (radio.id) {
+      const label = document.querySelector(`label[for="${radio.id}"]`);
+      if (label) {
+        return label.textContent?.trim() || null;
+      }
+    }
+
+    // Try parent label
+    const parentLabel = radio.closest('label');
+    if (parentLabel) {
+      return parentLabel.textContent?.trim() || null;
+    }
+
+    // Try next sibling label
+    const nextSibling = radio.nextElementSibling;
+    if (nextSibling && nextSibling.tagName.toLowerCase() === 'label') {
+      return nextSibling.textContent?.trim() || null;
+    }
+
+    return null;
   }
 
   /**
@@ -1399,6 +1868,10 @@ export class OnDemandAutofill {
    * Initialize form detection and visual indicators
    */
   private async initializeFormDetection(): Promise<void> {
+    if (!this.options.enableFormDetection) {
+      return;
+    }
+
     // Wait for page to load
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => this.detectAndIndicateForms());
@@ -1473,10 +1946,12 @@ export class OnDemandAutofill {
     const bestForm = this.selectBestForm(analysis.forms);
     if (!bestForm) return;
 
-    // Create main autofill indicator
-    const indicator = this.createAutofillIndicator(analysis.platform, bestForm);
-    document.body.appendChild(indicator);
-    this.formIndicators.push(indicator);
+    // Only create main button if enabled
+    if (this.options.enableButtonCreation) {
+      const indicator = this.createAutofillIndicator(analysis.platform, bestForm);
+      document.body.appendChild(indicator);
+      this.formIndicators.push(indicator);
+    }
 
     // Add field-level indicators for mapped fields
     bestForm.fields.forEach(field => {
@@ -1531,6 +2006,9 @@ export class OnDemandAutofill {
         data: { tabId: 0 },
       });
     });
+
+    // Make the indicator draggable
+    this.makeDraggable(indicator, 'traditional-autofill-position');
 
     return indicator;
   }
@@ -1725,10 +2203,117 @@ export class OnDemandAutofill {
       element.style.boxShadow = originalBoxShadow;
     }, 3000);
   }
+
+  /**
+   * Make element draggable with position persistence
+   */
+  private makeDraggable(element: HTMLElement, storageKey: string): void {
+    let isDragging = false;
+    let currentX = 0;
+    let currentY = 0;
+    let initialX = 0;
+    let initialY = 0;
+    let xOffset = 0;
+    let yOffset = 0;
+
+    const dragStart = (e: MouseEvent | TouchEvent) => {
+      if (e.type === "touchstart") {
+        const touch = (e as TouchEvent).touches[0];
+        initialX = touch.clientX - xOffset;
+        initialY = touch.clientY - yOffset;
+      } else {
+        initialX = (e as MouseEvent).clientX - xOffset;
+        initialY = (e as MouseEvent).clientY - yOffset;
+      }
+
+      if (e.target === element || element.contains(e.target as Node)) {
+        isDragging = true;
+        element.style.cursor = 'grabbing';
+        element.style.userSelect = 'none';
+      }
+    };
+
+    const dragEnd = () => {
+      initialX = currentX;
+      initialY = currentY;
+      isDragging = false;
+      element.style.cursor = 'pointer';
+      element.style.userSelect = '';
+
+      // Save position to localStorage
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({
+          x: currentX,
+          y: currentY
+        }));
+      } catch (error) {
+        console.warn('[OnDemandAutofill] Failed to save position:', error);
+      }
+    };
+
+    const drag = (e: MouseEvent | TouchEvent) => {
+      if (isDragging) {
+        e.preventDefault();
+        
+        if (e.type === "touchmove") {
+          const touch = (e as TouchEvent).touches[0];
+          currentX = touch.clientX - initialX;
+          currentY = touch.clientY - initialY;
+        } else {
+          currentX = (e as MouseEvent).clientX - initialX;
+          currentY = (e as MouseEvent).clientY - initialY;
+        }
+
+        xOffset = currentX;
+        yOffset = currentY;
+
+        // Constrain to viewport
+        const rect = element.getBoundingClientRect();
+        const maxX = window.innerWidth - rect.width;
+        const maxY = window.innerHeight - rect.height;
+        
+        currentX = Math.max(0, Math.min(currentX, maxX));
+        currentY = Math.max(0, Math.min(currentY, maxY));
+
+        element.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+      }
+    };
+
+    // Load saved position
+    try {
+      const savedPosition = localStorage.getItem(storageKey);
+      if (savedPosition) {
+        const { x, y } = JSON.parse(savedPosition);
+        currentX = x;
+        currentY = y;
+        xOffset = x;
+        yOffset = y;
+        element.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      }
+    } catch (error) {
+      console.warn('[OnDemandAutofill] Failed to load saved position:', error);
+    }
+
+    // Add event listeners
+    element.addEventListener('mousedown', dragStart);
+    element.addEventListener('touchstart', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('mouseup', dragEnd);
+    document.addEventListener('touchend', dragEnd);
+
+    // Add visual feedback for draggable element
+    element.style.cursor = 'pointer';
+    element.title = 'Click to autofill • Drag to move';
+  }
 }
 
-// Initialize on-demand autofill
-const onDemandAutofill = new OnDemandAutofill();
+// Initialize on-demand autofill with button creation disabled (unified manager handles buttons)
+const onDemandAutofill = new OnDemandAutofill({ 
+  enableButtonCreation: false,
+  enableFormDetection: false 
+});
 
-// Export for debugging
+// Export for debugging and AI integration access
 (globalThis as any).onDemandAutofill = onDemandAutofill;
+(window as any).onDemandAutofill = onDemandAutofill;

@@ -3,6 +3,7 @@ import { Button, cn } from '@extension/ui';
 import { useStorage } from '@extension/shared';
 import { exampleThemeStorage } from '@extension/storage';
 import type { UserProfile } from '@extension/shared';
+import { AIStatusIndicator } from './AIStatusIndicator';
 
 interface SiteConfig {
   domain: string;
@@ -159,6 +160,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onImport }) => {
         availableStartDate: '',
         workAuthorization: '',
         willingToRelocate: false,
+        defaultAnswers: {},
+        jobPreferences: {
+          workAuthorization: 'citizen',
+          requiresSponsorship: false,
+          willingToRelocate: false,
+          availableStartDate: new Date(),
+          preferredWorkType: 'remote',
+        },
+        privacySettings: {
+          shareAnalytics: false,
+          shareUsageData: false,
+          allowAIContentGeneration: false,
+          dataSyncEnabled: false,
+        },
+        aiPreferences: {
+          preferredTone: 'professional',
+          customInstructions: '',
+          excludedFields: [],
+          learningEnabled: true,
+          fieldMappingPreferences: {},
+          autoApproveInstructions: false,
+          maxInstructionsPerForm: 5,
+          confidenceThreshold: 0.8,
+        },
       },
       metadata: {
         createdAt: new Date(),
@@ -431,6 +456,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onImport }) => {
           ))}
         </div>
       </div>
+
+      {/* AI Settings */}
+      <AIStatusIndicator onOpenSettings={() => chrome.runtime.openOptionsPage()} />
 
       {/* Quick Actions */}
       <div className={cn(

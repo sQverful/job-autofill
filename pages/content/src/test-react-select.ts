@@ -3,6 +3,8 @@
  * Simple test function to verify React Select interaction works
  */
 
+import { ComponentDetector } from './detection/component-detector';
+
 /**
  * Test React Select filling on the current page
  */
@@ -168,8 +170,7 @@ async function testEnhancedComponentDetection() {
   console.log('🧪 Testing Enhanced Component Detection...');
   
   try {
-    // Import the ComponentDetector
-    const { ComponentDetector } = await import('./detection/component-detector');
+    // Use the ComponentDetector
     const detector = new ComponentDetector();
     
     // Find all potential select components on the page

@@ -148,6 +148,15 @@ describe('Validation Utilities', () => {
           allowAIContentGeneration: true,
           dataSyncEnabled: true,
         },
+        aiPreferences: {
+          preferredTone: 'professional',
+          excludedFields: [],
+          learningEnabled: true,
+          fieldMappingPreferences: {},
+          autoApproveInstructions: false,
+          maxInstructionsPerForm: 50,
+          confidenceThreshold: 70,
+        },
       },
       documents: {
         resumes: [],

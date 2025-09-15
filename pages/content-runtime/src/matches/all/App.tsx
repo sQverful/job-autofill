@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AIContentManager } from '../../components/ai-content/AIContentManager';
 import { useAIContent } from '../../hooks/useAIContent';
 import { detectAICompatibleFields, createFieldMonitor, type DetectedField } from '../../utils/fieldDetection';
-import type { AIContentManagerConfig, UserProfile } from '@extension/content/src/ai-content';
+import type { AIContentManagerConfig, UserProfile } from '@extension/content-script/src/ai-content';
 import '../../components/ai-content/ai-content.css';
 
 // Mock user profile - in real implementation this would come from storage
@@ -24,20 +24,24 @@ const mockUserProfile: UserProfile = {
   professionalInfo: {
     workExperience: [
       {
-        title: 'Software Engineer',
+        id: '1',
+        position: 'Software Engineer',
         company: 'Tech Corp',
-        duration: '2020-2023',
+        startDate: new Date('2020-01-01'),
+        endDate: new Date('2023-12-31'),
+        isCurrent: false,
         description: 'Developed web applications',
-        location: 'Remote',
-        current: false
+        location: 'Remote'
       }
     ],
     education: [
       {
+        id: '1',
         degree: 'Bachelor of Science',
-        field: 'Computer Science',
+        fieldOfStudy: 'Computer Science',
         institution: 'University of Technology',
-        graduationYear: 2020,
+        startDate: new Date('2016-09-01'),
+        endDate: new Date('2020-05-31'),
         gpa: 3.8
       }
     ],
@@ -47,16 +51,26 @@ const mockUserProfile: UserProfile = {
   preferences: {
     defaultAnswers: {},
     jobPreferences: {
-      desiredRoles: ['Software Engineer'],
-      preferredLocations: ['Remote'],
-      salaryRange: { min: 80000, max: 120000, currency: 'USD' },
-      jobTypes: ['full_time'],
-      workArrangements: ['remote']
+      workAuthorization: 'citizen' as const,
+      requiresSponsorship: false,
+      willingToRelocate: true,
+      availableStartDate: new Date(),
+      preferredWorkType: 'remote' as const
     },
     privacySettings: {
-      shareProfile: false,
-      allowAnalytics: false,
-      marketingEmails: false
+      shareAnalytics: false,
+      shareUsageData: false,
+      allowAIContentGeneration: true,
+      dataSyncEnabled: false
+    },
+    aiPreferences: {
+      preferredTone: 'professional',
+      excludedFields: [],
+      learningEnabled: true,
+      fieldMappingPreferences: {},
+      autoApproveInstructions: false,
+      maxInstructionsPerForm: 5,
+      confidenceThreshold: 0.8
     }
   },
   documents: {
@@ -66,7 +80,8 @@ const mockUserProfile: UserProfile = {
   metadata: {
     createdAt: new Date(),
     updatedAt: new Date(),
-    lastSyncAt: new Date()
+    lastSyncAt: new Date(),
+    version: 1
   }
 };
 
@@ -79,26 +94,26 @@ const mockAIConfig: AIContentManagerConfig = {
     maxTokens: 1000,
     temperature: 0.7,
     timeout: 30000,
-    retryAttempts: 3,
-    endpoints: {
-      generate: '/chat/completions',
-      validate: '/validate',
-      feedback: '/feedback'
-    },
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    cache: {
-      enabled: true,
-      ttl: 3600,
-      maxSize: 100
-    }
+    retryAttempts: 3
   },
-  platform: 'custom',
-  enableCaching: true,
-  enableFallbacks: true,
-  maxRetries: 3,
-  requestTimeout: 30000
+  contentSettings: {
+    enableCache: true,
+    cacheExpiration: 3600000, // 1 hour in milliseconds
+    maxCacheSize: 100,
+    enableFallback: true,
+    fallbackTemplates: true
+  },
+  uiSettings: {
+    showIndicators: true,
+    enablePreview: true,
+    autoDetectFields: true,
+    showAlternatives: true
+  },
+  permissions: {
+    allowDataCollection: false,
+    allowAnalytics: false,
+    allowImprovement: true
+  }
 };
 
 export default function App() {
@@ -140,6 +155,9 @@ export default function App() {
 
       return cleanup;
     }
+    
+    // Return undefined for non-job application pages
+    return undefined;
   }, []);
 
   // Show AI content manager only if enabled and fields are detected

@@ -9,3 +9,4 @@ export { ActivitySummary } from './ActivitySummary';
 export { ExtensionStatusFeedback } from './ExtensionStatusFeedback';
 export { PrivacySecurityIndicator } from './PrivacySecurityIndicator';
 export { SecurityWarnings } from './SecurityWarnings';
+export { AIStatusIndicator } from './AIStatusIndicator';

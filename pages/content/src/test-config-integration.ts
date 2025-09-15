@@ -3,7 +3,9 @@
  * This tests that hardcoded patterns have been successfully extracted to JSON
  */
 
-import { configLoader } from './config/config-loader.js';
+import { configLoader } from './config/config-loader';
+import { websiteDetector } from './detection/website-detector';
+import { FieldMapper } from './detection/field-mapper';
 
 /**
  * Test configuration loading and website detection
@@ -89,7 +91,6 @@ async function testWebsiteDetection(): Promise<void> {
   console.log('\n🔍 Testing Website Detection Integration...\n');
 
   try {
-    const { websiteDetector } = await import('./detection/website-detector.js');
 
     // Test detection for current page
     console.log('1️⃣ Testing detection for current page...');
@@ -114,7 +115,6 @@ async function testFieldMapping(): Promise<void> {
   console.log('\n🗺️ Testing Field Mapping Integration...\n');
 
   try {
-    const { FieldMapper } = await import('./detection/field-mapper.js');
 
     // Create a mock website config for testing
     const mockConfig = {

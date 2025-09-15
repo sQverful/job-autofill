@@ -1,7 +1,7 @@
 {
-  "name": "chrome-extension-boilerplate-react-vite",
-  "version": "0.5.1",
-  "description": "chrome extension boilerplate",
+  "name": "smart-ai-autofill-extension",
+  "version": "1.0.0",
+  "description": "Smart AI Autofill Chrome Extension for job applications",
   "license": "MIT",
   "private": true,
   "sideEffects": false,
@@ -35,7 +35,8 @@
     "copy-env": "bash bash-scripts/copy_env.sh",
     "set-global-env": "bash bash-scripts/set_global_env.sh",
     "module-manager": "pnpm -F module-manager start",
-    "postinstall": "pnpm copy-env"
+    "postinstall": "pnpm copy-env",
+    "release": "bash scripts/create-release.sh"
   },
   "dependencies": {
     "react": "^19.1.0",

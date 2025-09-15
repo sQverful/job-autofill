@@ -263,7 +263,7 @@ export class CachedApiClient {
 
   constructor(cacheConfig?: Partial<CacheConfig>) {
     this.cacheManager = new CacheManager(cacheConfig);
-    this.originalFetch = fetch.bind(window);
+    this.originalFetch = fetch.bind(globalThis);
   }
 
   /**

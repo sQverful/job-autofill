@@ -56,6 +56,16 @@ const createDefaultProfile = (): UserProfile => ({
       allowAIContentGeneration: true,
       dataSyncEnabled: true,
     },
+    aiPreferences: {
+      preferredTone: 'professional',
+      customInstructions: '',
+      excludedFields: [],
+      learningEnabled: true,
+      fieldMappingPreferences: {},
+      autoApproveInstructions: false,
+      maxInstructionsPerForm: 5,
+      confidenceThreshold: 0.8,
+    },
   },
   documents: {
     resumes: [],
