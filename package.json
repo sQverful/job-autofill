@@ -1,6 +1,6 @@
 {
   "name": "smart-ai-autofill-extension",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Smart AI Autofill Chrome Extension for job applications",
   "license": "MIT",
   "private": true,
