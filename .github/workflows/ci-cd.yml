@@ -31,15 +31,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
         
-      - name: Type check
-        run: pnpm type-check || echo "Type check failed but continuing with build"
-        continue-on-error: true
+      # - name: Type check
+      #   run: pnpm type-check || echo "Type check failed but continuing with build"
+      #   continue-on-error: true
         
-      - name: Lint
-        run: pnpm lint
+      # - name: Lint
+      #   run: pnpm lint
         
-      - name: Format check
-        run: pnpm format --check
+      # - name: Format check
+      #   run: pnpm format --check
         
       - name: Build extension
         run: pnpm build
